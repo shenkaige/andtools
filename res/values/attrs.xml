@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="ImageMarqueeView">
+        <attr name="src" format="reference" />
+    </declare-styleable>
+    <declare-styleable name="BorderLinearLayout">
+        <attr name="border_left_size" format="dimension" />
+        <attr name="border_top_size" format="dimension" />
+        <attr name="border_right_size" format="dimension" />
+        <attr name="border_bottom_size" format="dimension" />
+        <attr name="border_enable" default="true" format="boolean" />
+        <attr name="border_color" format="color" />
+    </declare-styleable>
+    <declare-styleable name="DottedLineView">
+        <attr name="line_color" format="color" />
+        <attr name="line_stroke_width" format="dimension" />
+    </declare-styleable>
+
+</resources>

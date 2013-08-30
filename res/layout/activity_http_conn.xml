@@ -1,0 +1,38 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:gravity="center"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/local_source_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="如果你想请求本机的资源，请使用10.0.2.2代替localhost/127.0.0.1,你也可以点我，帮你自动添加" />
+
+    <EditText
+        android:id="@+id/url_box"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="http://www.baidu.com/"
+        android:hint="please input url" />
+
+    <Button
+        android:id="@+id/submit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="click to request data" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" >
+
+        <TextView
+            android:id="@+id/request_result"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" />
+    </ScrollView>
+
+</LinearLayout>
