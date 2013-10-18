@@ -8,47 +8,19 @@ import java.util.Map;
 import android.annotation.SuppressLint;
 
 import com.phodev.andtools.drag.BaseDataLine;
-import com.phodev.andtools.drag.CacheManager;
-import com.phodev.andtools.drag.CacheManager.CacheBounds;
 import com.phodev.andtools.drag.CellModel;
 import com.phodev.andtools.drag.DragConfig;
 
-public class DataLineCellsImpl extends BaseDataLine<CellModel> implements
-		CacheBounds<CellModel> {
+public class DataLineCellsImpl extends BaseDataLine<CellModel> {
 	private int cacheStartSegment;
 	private int cacheEndSegment;
 	private int cacheMaxPos;
 	private int cacheMinPos;
-	private CacheManager<CellModel> cacheManager;
 
 	public DataLineCellsImpl(int defSegmentLen,
 			Map<Integer, Integer> segmentLenInfo) {
 		super(defSegmentLen, segmentLenInfo);
 		setRemoveSortFilter(new RemoveSortFilterImpl());
-	}
-
-	public void boundCacheManager(CacheManager<CellModel> manager) {
-		if (cacheManager != null) {
-			cacheManager.setCacheBounds(null);
-			cacheManager.releaseAll();
-		}
-		cacheManager = manager;
-		if (cacheManager != null) {
-			cacheManager.setCacheBounds(this);
-		}
-	}
-
-	public void setCacheBounds(int startSegment, int endSegment) {
-		if (startSegment == cacheStartSegment && endSegment == cacheEndSegment) {
-			return;
-		}
-		cacheStartSegment = startSegment;
-		cacheEndSegment = endSegment;
-		if (updateCacheBounds()) {
-			if (cacheManager != null) {
-				cacheManager.checkCacheaVailability();
-			}
-		}
 	}
 
 	@Override
@@ -71,12 +43,6 @@ public class DataLineCellsImpl extends BaseDataLine<CellModel> implements
 					+ ",cacheMaxPos:" + cacheMaxPos);
 		}
 		return true;
-	}
-
-	@Override
-	public boolean isNeedCache(CellModel key) {
-		int index = indexOf(key);
-		return index <= cacheMaxPos && index >= cacheMinPos;
 	}
 
 	@SuppressLint("UseSparseArrays")

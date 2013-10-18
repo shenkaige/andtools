@@ -13,7 +13,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import com.phodev.andtools.R;
-import com.phodev.andtools.drag.CacheManager;
 import com.phodev.andtools.drag.CellLayout;
 import com.phodev.andtools.drag.CellLayout.OnAttachChangedListener;
 import com.phodev.andtools.drag.CellModel;
@@ -40,7 +39,6 @@ public class PageViewAdapter extends MultiPageAdapter {
 	private Map<Integer, Integer> mPageLenRefer;
 	private DataLineCellsImpl mDataLine;
 	private CellViewFactory cellViewFactory = new CellViewFactoryImpl();
-	private CacheManager<CellModel> mCacheManager;
 	private final int COLUMN_COUNT = 3;
 	private final int HOPE_ITEM_SPACE = 2;
 	private int defPageLength = 12;// 3*4
@@ -55,10 +53,8 @@ public class PageViewAdapter extends MultiPageAdapter {
 	private OnCellClickListener mOnCellClickListener;
 
 	public PageViewAdapter(DragLayer dragLayer,
-			Map<Integer, Integer> pageLenRefer,
-			CacheManager<CellModel> cacheManager, OnCellClickListener listner) {
+			Map<Integer, Integer> pageLenRefer, OnCellClickListener listner) {
 		mPageLenRefer = pageLenRefer;
-		mCacheManager = cacheManager;
 		mDragLayer = dragLayer;
 		mOnCellClickListener = listner;
 	}
@@ -140,10 +136,6 @@ public class PageViewAdapter extends MultiPageAdapter {
 		}
 	}
 
-	public CacheManager<CellModel> getCacheManager() {
-		return mCacheManager;
-	}
-
 	@Override
 	public void onFetchSize(int pageWidth, int pageHeight) {
 		super.onFetchSize(pageWidth, pageHeight);
@@ -177,7 +169,6 @@ public class PageViewAdapter extends MultiPageAdapter {
 		}
 		mDataLine.setSegmentCountListener(mSegmentCountListener);
 		mDataLine.setOnSegmentDestroyListener(mOnSegmentDestroyListener);
-		mDataLine.boundCacheManager(mCacheManager);
 		//
 		isConfiged = true;
 		if (mDataLineCreateListener != null) {

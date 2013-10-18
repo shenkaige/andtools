@@ -11,9 +11,8 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.widget.Toast;
 
-import com.phodev.andtools.drag.CacheManager;
-import com.phodev.andtools.drag.CellModel;
 import com.phodev.andtools.drag.CellLayout;
+import com.phodev.andtools.drag.CellModel;
 import com.phodev.andtools.drag.DragLayer;
 import com.phodev.andtools.drag.DragWorkspace;
 import com.phodev.andtools.drag.DraggableGridView.OnCellClickListener;
@@ -31,7 +30,6 @@ public class TestActivity extends Activity {
 		// setContentView(rootView);
 		//
 		//
-		CacheManager<CellModel> cacheManager = new CacheManager<CellModel>();
 		workspace = new DragWorkspace(this);
 		DragLayer dragLayer = workspace.getDragLayer();
 		Map<Integer, Integer> refer = new HashMap<Integer, Integer>();
@@ -41,14 +39,14 @@ public class TestActivity extends Activity {
 		Random random = new Random();
 		for (int i = 0; i < 100; i++) {
 			CellModel c = new CellModel();
-			c.i=i;
+			c.i = i;
 			c.setMoveable(true);
 			c.setDeletable(true);
 			c.setData(random.nextInt());
 			out.add(c);
 		}
 		PageViewAdapter adapter = new PageViewAdapter(dragLayer, refer,
-				cacheManager, new OnCellClickListener() {
+				new OnCellClickListener() {
 
 					@Override
 					public void onItemClick(CellLayout cell) {
