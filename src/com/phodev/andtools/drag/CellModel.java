@@ -18,6 +18,8 @@ public class CellModel implements Data {
 
 	private Object data;
 
+	public int i;
+
 	public Object getData() {
 		return data;
 	}

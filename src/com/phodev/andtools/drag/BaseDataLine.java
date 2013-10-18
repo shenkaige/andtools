@@ -369,7 +369,7 @@ public class BaseDataLine<T extends Data> implements DataLine<T> {
 				lastSegment--;
 			}
 		}
-		for (int i = dellFromSegment; i < segmentCount; i++) {
+		for (int i = segmentCount - 1; i >= dellFromSegment; i--) {
 			notifyDataDelete(i, dellFromSegment, dataPosition, locations);
 		}
 		notifyDataSortChangedAfterDelete(dataPosition, locations);

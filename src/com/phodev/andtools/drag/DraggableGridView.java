@@ -3,11 +3,10 @@ package com.phodev.andtools.drag;
 //TO DO:
 //- improve timer performance (especially on Eee Pad)
 //- improve child rearranging
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import android.annotation.SuppressLint;
-import android.graphics.Canvas;
 import android.graphics.Point;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -107,7 +106,6 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 			onDataSetChanged();
 		}
 
-		@SuppressLint("WrongCall")
 		@Override
 		public void onDataMove(int fromGlobalPos, int moveToGlobalPos) {
 			if (!interceptDataSetChangeFromPosition) {
@@ -129,33 +127,9 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 				// 这种情况下，我们认为，数据的删除并没有影响到自己，因为本来就没人任何view显示，那还让他继续空着好了
 				return;
 			}
-			// 数据链上的数据删除，只会影响后面的数据位置
-			if (!ignoreCellDelelteChange) {
-				// 1-移除第一个位置的Cell
-				// 2-搜有的Cell向前一动一位
-				View child = getChildAt(0);
-				child.clearAnimation();
-				removeViewInLayout(child);
-				detachCell(child);
-				// 3-因为1,2.所以最后一个会有一个空缺，尝试补充这个空缺
-				CellModel c = mDataLine.getData(getPageIndex(), getItemCount());
-				if (c != null) {
-					CellLayout celllLayout = readerNewCell(c);
-					View ncv = celllLayout;
-					if (ncv != null) {
-						LayoutParams lp = ncv.getLayoutParams();
-						if (lp == null) {
-							lp = generateDefaultLayoutParams();
-						}
-						addViewInLayout(ncv, -1, lp);// +
-						attachCell(ncv);
-						if (isNeedMeasure(ncv, childSize, childSize)) {
-							int spec = exactlySizeMeasureSpec(childSize);
-							ncv.measure(spec, spec);
-						}
-					}
-				}
-				reorderChildren();
+			// 如果是被删除的Cell所在的页面，我们先不忙处理，等待，删除的Animation完毕后，在处理UI
+			if (getPageIndex() != fromSegment) {
+				popFirstChild();
 			}
 		}
 
@@ -164,8 +138,38 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 			mDataIsChanged = true;
 			requestLayout();
 		}
-
 	};
+
+	private void popFirstChild() {
+		int curPageIndex = getPageIndex();
+		// 移除第一个位置的Cell
+		CellLayout child = (CellLayout) getChildAt(0);
+		child.clearAnimation();
+		removeViewInLayout(child);
+		detachCell(child);
+		// cellViewFactory.recycleCellView(child);//依然还会再次使用，不需要回收
+		// 尝试补充最后空缺的位置
+		CellModel c = mDataLine.getData(curPageIndex, getItemCount() - 1);
+		if (c != null) {
+			CellLayout celllLayout = readerNewCell(c);
+			View ncv = celllLayout;
+			if (ncv != null) {
+				LayoutParams lp = ncv.getLayoutParams();
+				if (lp == null) {
+					lp = generateDefaultLayoutParams();
+				}
+				addViewInLayout(ncv, -1, lp);// +
+				attachCell(ncv);
+				if (isNeedMeasure(ncv, childSize, childSize)) {
+					int spec = exactlySizeMeasureSpec(childSize);
+					ncv.measure(spec, spec);
+				}
+			}
+		}
+		// TODO 优化，针对但个数据的变化，减少不需要的更新
+		mDataIsChanged = true;
+		requestLayout();
+	}
 
 	@Override
 	protected void onLayout(boolean changed, int l, int t, int r, int b) {
@@ -178,12 +182,7 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 			mVerticalSpace = (r - l) / colCount;
 			mHorizontalSpace = mVerticalSpace;
 		}
-		boolean needMeasureChild;
-		if (changed || mDataIsChanged) {
-			needMeasureChild = true;
-		} else {
-			needMeasureChild = false;
-		}
+		boolean needMeasureChild = changed || mDataIsChanged;
 		// -----------------------------------------------------
 		if (mDataIsChanged) {
 			removeAllViews(false, false);
@@ -205,6 +204,7 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 			}
 			mDataIsChanged = false;
 		}
+		// check measure------------------------------------
 		int childCount = getChildCount();
 		if (needMeasureChild) {
 			int childMeasureSpec = exactlySizeMeasureSpec(childSize);
@@ -217,9 +217,9 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 				}
 			}
 		}
-		@SuppressLint("DrawAllocation")
-		Point xy = new Point();
-		// layout all child
+		final Point xy = layoutPoint;
+		xy.set(0, 0);
+		// layout all child--------------------------------
 		for (int i = 0; i < childCount; i++) {
 			View child = getChildAt(i);
 			if (newComeCellViewIndex == i) {
@@ -233,13 +233,19 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 		}
 	}
 
+	private Point layoutPoint = new Point();
+
 	protected CellLayout readerNewCell(CellModel cellModel) {
 		CellLayout cellLayout = cellViewFactory.readerCell(cellModel, this);
+		boundCellLayoutAndModel(cellLayout, cellModel);
+		return cellLayout;
+	}
+
+	private void boundCellLayoutAndModel(CellLayout cellLayout, CellModel model) {
 		if (cellLayout != null) {
-			cellLayout.setCellModel(cellModel);
+			cellLayout.setCellModel(model);
 			cellLayout.setCellActionListener(cellActionListener);
 		}
-		return cellLayout;
 	}
 
 	private int exactlySizeMeasureSpec(int exactlySize) {
@@ -452,7 +458,7 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 		public boolean onLongClick(View v) {
 			int index = getLastIndex();
 			if (index != -1) {
-				CellLayout cellLayout = getCellLayoutByPosition(index);
+				CellLayout cellLayout = findCellLayoutFromParent(index);
 				postDrag(cellLayout, index);
 				return true;
 			}
@@ -526,11 +532,8 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 			return;
 		}
 		CellLayout cellLayout = (CellLayout) getChildAt(target);
-		if (cellLayout != null) {
-			CellModel cell = cellLayout.getCellModel();
-			if (cell != null && !cell.isMoveable()) {
-				return;
-			}
+		if (cellLayout != null && !cellLayout.isMoveable()) {
+			return;
 		}
 		//
 		DraggingObject drag = mDragLayer.getDraggingObject();
@@ -635,7 +638,7 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 			oldXY.set(0, 0);
 			getCoorFromIndex(moveOut, oldXY);
 			getChildAt(outHO);
-			CellLayout v = getCellLayoutByPosition(moveOut);
+			CellLayout v = findCellLayoutFromParent(moveOut);
 			//
 			int oldX = 0;
 			int oldY = 0;
@@ -673,6 +676,7 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 		Point newXY = new Point();
 		boolean increase = endPos < gapPos;
 		int lastNewPos = -1;
+		int pageIndex = getPageIndex();
 		while (gapPos != endPos) {
 			int oldPos;
 			int newPos = endPos;
@@ -681,8 +685,14 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 			} else {
 				oldPos = --endPos;
 			}
-			CellLayout cellLayout = getCellLayoutByPosition(oldPos);
-			CellModel cell = cellLayout.getCellModel();
+			CellModel cell = mDataLine.getData(pageIndex, oldPos);
+			if (cell == null) {
+				continue;
+			}
+			CellLayout cellLayout = cellViewFactory.findCellLayout(cell);
+			if (cellLayout == null) {
+				continue;
+			}
 			if (!cell.isMoveable()) {
 				lastNewPos = newPos;
 				continue;
@@ -788,16 +798,7 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 		}
 
 	};
-	private AnimationListener lastAnimListenerForDelete = new SimpleAnimationListener() {
-		@Override
-		public void onAnimationEnd(Animation animation) {
-			deleletInvalideChild();
-			lastAnimationIsRunning = false;
-		}
-
-	};
 	private CellActionListener cellActionListener = new CellActionListener() {
-
 		@Override
 		public void onCellRequestRemove(CellLayout cellLayout) {
 			if (lastAnimationIsRunning == true) {
@@ -823,9 +824,7 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 			invalidPositionOnDeleteChild = delViewIndex;
 			//
 			mDataLine.registerLocationChangedListener(DraggableGridView.this);
-			ignoreCellDelelteChange = true;// 控制当前页面不能刷新
 			mDataLine.remove(cell);
-			ignoreCellDelelteChange = false;
 		}
 	};
 
@@ -865,67 +864,55 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 		}
 	}
 
-	private boolean ignoreCellDelelteChange = false;
 	private int invalidPositionOnDeleteChild = -1;
+	private Set<Animation> deleteItemAnimTree = new HashSet<Animation>();
 
-	List<View> tempAnimList = new ArrayList<View>();
+	private void prepareDeleteAnim(Animation animation) {
+		if (animation == null) {
+			return;
+		}
+		deleteItemAnimTree.add(animation);
+		animation.setAnimationListener(deleteImteAnimListener);
+	}
+
+	private AnimationListener deleteImteAnimListener = new SimpleAnimationListener() {
+
+		@Override
+		public void onAnimationEnd(Animation animation) {
+			deleteItemAnimTree.remove(animation);
+			if (deleteItemAnimTree.size() <= 0) {
+				deleletInvalideChild();
+				lastAnimationIsRunning = false;
+			}
+		}
+
+	};
 
 	@Override
 	public void onLocationChanged(int delGlobalIndex, Locations indexMapping) {
 		// 在需要的时候在明确的注册，每次注册只生效一次
 		mDataLine.unregisterLocationChangedListener(this);
-		tempAnimList.clear();
 		// 数据已经移动完毕，当前页面的view还是原始的，这个时候开始做所有的动画，最后一个动画结束后，刷新当前页面的View
 		//
 		// 让被删除的View小消失的动画
 		View view = getChildAt(invalidPositionOnDeleteChild);
 		setupScaleAnimation(view, null);
-		tempAnimList.add(view);
-		// 让位置改变的view做移动动画
-		setupAnimationForDelete(indexMapping, tempAnimList);
+		prepareDeleteAnim(view.getAnimation());
+		setupAnimationForDelete(indexMapping);
 		//
-		onLayout(false, getLeft(), getTop(), getRight(), getBottom());
+		lastAnimationIsRunning = true;
+		//
+		newComeCellRequestX = -1;
+		newComeCellRequestY = -1;
+		newComeCellViewIndex = -1;
 		invalidate();
-		waittingStartDeleteAnimation = true;
 	}
 
-	private boolean waittingStartDeleteAnimation = false;
-
-	@Override
-	protected void dispatchDraw(Canvas canvas) {
-		super.dispatchDraw(canvas);
-		if (waittingStartDeleteAnimation) {
-			post(startDeleteAnimationRunnable);
-			waittingStartDeleteAnimation = false;
-		}
-	}
-
-	private Runnable startDeleteAnimationRunnable = new Runnable() {
-		@Override
-		public void run() {
-			int animSize = tempAnimList.size();
-			int lastAnim = animSize - 1;
-			for (int i = 0; i < animSize; i++) {
-				View v = tempAnimList.get(i);
-				Animation animation = v.getAnimation();
-				if (lastAnim == i) {
-					lastAnimationIsRunning = true;
-					animation.setAnimationListener(lastAnimListenerForDelete);
-				}
-				v.startAnimation(animation);
-			}
-			//
-			newComeCellRequestX = -1;
-			newComeCellRequestY = -1;
-			newComeCellViewIndex = -1;
-			tempAnimList.clear();
-		}
-	};
 	private int newComeCellRequestX = -1;
 	private int newComeCellRequestY = -1;
 	private int newComeCellViewIndex = -1;
 
-	private void setupAnimationForDelete(Locations loccations, List<View> out) {
+	private void setupAnimationForDelete(Locations loccations) {
 		int changeSize = loccations.size();
 		int pageStart = mDataLine.getSegmentStart(getPageIndex());
 		int pageEnd = mDataLine.getSegmentEnd(getPageIndex());
@@ -951,7 +938,16 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 			if (oldGIndex > pageEnd) {
 				// 来自右边的页面
 				// 布局到当前页面
-				CellLayout newCellView = getCellLayoutByPosition(oldPos);
+				CellModel cell = mDataLine.getData(pageEnd);
+				if (cell == null) {
+					continue;
+				}
+				// 数据已经改变了，那么当前页面的最后一个数据，就是后面一页中的第一个数据
+				CellLayout newCellView = cellViewFactory.findCellLayout(cell);
+				if (newCellView == null) {
+					continue;
+				}
+				//
 				newCellView.setCellActionListener(cellActionListener);
 				// measure,layout
 				int x = getWidth();
@@ -962,25 +958,25 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 				newComeCellRequestY = y;
 				innerAddNewCellToLayout(newCellView, newComeCellViewIndex, true);
 				//
-				int oX = 0;
-				int oY = 0;
-				int nX = newXY.x - x;
+				int oX = 150;
+				int oY = 150;
+				int nX = -newXY.x - x;
 				int nY = newXY.y - y;
 				setupMoveAnimation(newCellView, oX, oY, nX, nY, true, null);
-				out.add(newCellView);
+				prepareDeleteAnim(newCellView.getAnimation());
 			} else if (oldGIndex < pageStart) {
 				// 来自左边页面
 				// 在删除的时候是个特殊的操作，当前页面如果数据不够的话，那么只能从右边页面过来，从左边过来是不可能，所以忽略这种情况
 			} else {
 				// 自己的页面
-				View cellView = getChildAt(oldPos);
+				View cellView = findCellLayoutFromParent(oldPos);
 				//
 				int oX = oldXY.x - cellView.getLeft();
 				int oY = oldXY.y - cellView.getTop();
 				int nX = newXY.x - cellView.getLeft();
 				int nY = newXY.y - cellView.getTop();
 				setupMoveAnimation(cellView, oX, oY, nX, nY, true, null);
-				out.add(cellView);
+				prepareDeleteAnim(cellView.getAnimation());
 			}
 		}
 	}
@@ -1010,10 +1006,12 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 	private void deleletInvalideChild() {
 		if (invalidPositionOnDeleteChild != -1) {
 			if (invalidPositionOnDeleteChild < getChildCount()) {
-				View view = getChildAt(invalidPositionOnDeleteChild);
+				CellLayout view = (CellLayout) getChildAt(invalidPositionOnDeleteChild);
 				view.clearAnimation();
 				removeViewInLayout(view);
 				detachCell(view);
+				cellViewFactory.recycleCellView(view);
+				// TODO is ready need reorder
 				reorderChildren();
 			}
 		}
@@ -1068,7 +1066,6 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 		return -1;
 	}
 
-	@SuppressLint("WrongCall")
 	protected void reorderChildren() {
 		// FIGURE OUT HOW TO REORDER CHILDREN WITHOUT REMOVING THEM ALL AND
 		// RECONSTRUCTING THE LIST!!!
@@ -1078,14 +1075,14 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 		}
 		removeAllViewsInLayout();
 		// TODO-----------------重写ReorderChildren
-		// int size = getItemCount();
-		// for (int i = 0; i < size; i++) {
-		// CellModel cell = mDataLine.getData(getPageIndex(), i);
-		// cell.setCellActionListener(cellActionListener);
-		// View child = cell.getCellViewOrCreate(this);
-		// addViewInLayout(child, i, child.getLayoutParams(), true);
-		// }
-		mDataIsChanged = true;
+		int size = getItemCount();
+		int pageIndex = getPageIndex();
+		for (int i = 0; i < size; i++) {
+			CellModel cell = mDataLine.getData(pageIndex, i);
+			CellLayout child = cellViewFactory.findCellLayout(cell);
+			boundCellLayoutAndModel(child, cell);
+			addViewInLayout(child, i, child.getLayoutParams(), true);
+		}
 		onLayout(false, getLeft(), getTop(), getRight(), getBottom());
 	}
 
@@ -1111,7 +1108,7 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 		}
 		if (needRecycleChildren != null && needRecycleChildren.length > 0) {
 			for (int i = 0; i < childCount; i++) {
-				View child = needRecycleChildren[i];
+				CellLayout child = (CellLayout) needRecycleChildren[i];
 				detachCell(child);
 			}
 		}
@@ -1125,12 +1122,12 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 		}
 	}
 
-	private void detachCell(View view) {
-		if (view instanceof CellLayout) {
-			CellLayout cellLayout = ((CellLayout) view);
-			cellLayout.onDetach(this);
-			onCellDetach(cellLayout);
+	private void detachCell(CellLayout cellLayout) {
+		if (cellLayout == null) {
+			return;
 		}
+		cellLayout.onDetach(this);
+		onCellDetach(cellLayout);
 	}
 
 	protected void onCellAttach(CellLayout cell) {
@@ -1172,7 +1169,7 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 		lastTarget = -1;
 	}
 
-	protected CellLayout getCellLayoutByPosition(int index) {
+	protected CellLayout findCellLayoutFromParent(int index) {
 		View v = getChildAt(index);
 		if (v instanceof CellLayout) {
 			return (CellLayout) v;

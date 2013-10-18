@@ -41,6 +41,7 @@ public class TestActivity extends Activity {
 		Random random = new Random();
 		for (int i = 0; i < 100; i++) {
 			CellModel c = new CellModel();
+			c.i=i;
 			c.setMoveable(true);
 			c.setDeletable(true);
 			c.setData(random.nextInt());

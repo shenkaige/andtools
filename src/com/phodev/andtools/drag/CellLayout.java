@@ -77,6 +77,24 @@ public class CellLayout extends FrameLayout {
 		this.cellModel = cellModel;
 	}
 
+	/**
+	 * 可移动的
+	 * 
+	 * @return
+	 */
+	public boolean isMoveable() {
+		return cellModel != null && cellModel.isMoveable();
+	}
+
+	/**
+	 * 可删除的
+	 * 
+	 * @return
+	 */
+	public boolean isDeletable() {
+		return cellModel != null && cellModel.isDeletable();
+	}
+
 	public View getContentView() {
 		return mContentView;
 	}
@@ -212,9 +230,9 @@ public class CellLayout extends FrameLayout {
 	private void dispatchDraw(Canvas canvas, boolean isEditModel) {
 		if (isEditModel) {
 			if (cellModel != null && cellModel.isDeletable()) {
-				if (closeBtn.getVisibility() != View.VISIBLE) {
-					closeBtn.setVisibility(View.VISIBLE);
-				}
+				checkVisibility(closeBtn, View.VISIBLE);
+			} else {
+				checkVisibility(closeBtn, View.GONE);
 			}
 			int c_count = canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(),
 					DragConfig.CELL_EDIT_ALPHA,
@@ -222,10 +240,14 @@ public class CellLayout extends FrameLayout {
 			super.dispatchDraw(canvas);
 			canvas.restoreToCount(c_count);
 		} else {
-			if (closeBtn.getVisibility() != View.GONE) {
-				closeBtn.setVisibility(View.GONE);
-			}
+			checkVisibility(closeBtn, View.GONE);
 			super.dispatchDraw(canvas);
+		}
+	}
+
+	private void checkVisibility(View view, int visible) {
+		if (view != null && view.getVisibility() != visible) {
+			view.setVisibility(visible);
 		}
 	}
 }
