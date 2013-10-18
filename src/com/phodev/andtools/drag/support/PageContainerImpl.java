@@ -2,12 +2,11 @@ package com.phodev.andtools.drag.support;
 
 import android.content.Context;
 import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.View;
 
 import com.phodev.andtools.drag.PageContainer;
-import com.phodev.andtools.drag.PageContainer.OnPageStatusListener;
 import com.phodev.andtools.viewpage.MultiPageView;
 
 /**
@@ -29,7 +28,7 @@ public class PageContainerImpl extends MultiPageView implements PageContainer {
 	}
 
 	private void init() {
-		setOffscreenPageLimit(2);// 最多持有5个界面(2+1+2)
+		// setOffscreenPageLimit(2);// 最多持有5个界面(2+1+2)
 		super.setOnPageChangeListener(mInnerOnPageChangeListener);
 	}
 
@@ -132,4 +131,15 @@ public class PageContainerImpl extends MultiPageView implements PageContainer {
 			}
 		}
 	};
+
+	@Override
+	public void refreshCellState(int cellStatus) {
+		int childCount = getChildCount();
+		for (int i = 0; i < childCount; i++) {
+			View v = getChildAt(i);
+			v.forceLayout();
+			v.requestLayout();
+			v.invalidate();
+		}
+	}
 }

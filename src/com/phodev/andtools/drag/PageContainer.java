@@ -28,6 +28,8 @@ public interface PageContainer {
 
 	public void setOnPageStatusListener(OnPageStatusListener listener);
 
+	public void refreshCellState(int cellStatus);
+
 	public interface OnPageStatusListener extends OnPageChangeListener {
 
 	}

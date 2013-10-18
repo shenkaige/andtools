@@ -3,8 +3,6 @@ package com.phodev.andtools.drag;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.phodev.andtools.drag.support.PageContainerImpl;
-
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
@@ -12,6 +10,8 @@ import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+
+import com.phodev.andtools.drag.support.PageContainerImpl;
 
 /**
  * 容纳PageHost,DragLayer
@@ -80,8 +80,6 @@ public class DragWorkspace extends FrameLayout implements DragLayerHost {
 		public boolean onDoubleTap(MotionEvent e) {
 			if (DragConfig.CELL_STATUS == CellModel.CELL_STATUS_EDIT) {
 				changeDragStatus(CellModel.CELL_STATUS_NORMAL);
-				invalidate();
-				requestLayout();
 				return true;
 			}
 			return super.onDoubleTap(e);
@@ -130,6 +128,7 @@ public class DragWorkspace extends FrameLayout implements DragLayerHost {
 			DragConfig.CELL_STATUS = status;
 			notifyDragStatusChanged(DragStatus.finished);
 		}
+		mPageContainer.refreshCellState(status);
 	}
 
 	public interface DragStatusObserver {

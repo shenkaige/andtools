@@ -961,7 +961,6 @@ public class DraggableGridView extends ViewGroup implements DropTarget,
 				int oX = getWidth();
 				int oY = 0;
 				int nX = newXY.x;
-				Log.e("ttt", "new newXY.x:" + newXY.x + " oX:" + oX);
 				int nY = newXY.y - y;
 				setupMoveAnimation(newCellView, oX, oY, nX, nY, true, null);
 				prepareDeleteAnim(newCellView.getAnimation());
