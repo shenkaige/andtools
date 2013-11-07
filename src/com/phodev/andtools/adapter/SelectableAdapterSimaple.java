@@ -8,6 +8,12 @@ public class SelectableAdapterSimaple extends
 		SelectableAdapter<Integer, Object> {
 
 	@Override
+	public int getCount() {
+		// return super.getCount();
+		return 20;// test
+	}
+
+	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		CheckBox cb = null;
 		if (convertView instanceof CheckBox) {
