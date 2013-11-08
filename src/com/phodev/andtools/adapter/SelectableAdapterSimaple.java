@@ -26,11 +26,14 @@ public class SelectableAdapterSimaple extends
 			cb = (CheckBox) convertView;
 		} else {
 			cb = new CheckBox(parent.getContext());
-			cb.setOnCheckedChangeListener(onCheckedChangeListener);
 		}
+		// 避免第归
+		cb.setOnCheckedChangeListener(null);
 		//
 		cb.setTag(POSITION_ID, position);
 		cb.setChecked(isCheckedData(getData(position)));
+		//
+		cb.setOnCheckedChangeListener(onCheckedChangeListener);
 		return cb;
 	}
 
