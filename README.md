@@ -8,3 +8,6 @@ Android Develop Tools,widget
 数据库方：BaseDao
 UI      ：Widget
 下载文件：DownloadManager
+
+
+QQ讨论群：37493362
