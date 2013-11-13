@@ -9,7 +9,7 @@ import com.phodev.andtools.common.CommonParam;
 import com.phodev.andtools.db.sample.PhodevDB.Table_Note;
 
 public class PhodevDatabaseHelper extends SQLiteOpenHelper {
-	private static final String TAG = "GrammarDatabaseHelper";
+	private static final String TAG = "PhodevDatabaseHelper";
 	public static final String DATABASE_NAME = "phodev_demo_db_module.db";
 
 	public static final int DATABASE_VERSION = 1;
