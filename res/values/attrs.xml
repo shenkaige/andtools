@@ -16,5 +16,10 @@
         <attr name="line_color" format="color" />
         <attr name="line_stroke_width" format="dimension" />
     </declare-styleable>
+    <declare-styleable name="PageIndicatorView">
+        <attr name="nromalDot" format="reference|color" />
+        <attr name="selectedDot" format="reference|color" />
+        <attr name="dotSpace" format="dimension" />
+    </declare-styleable>
 
 </resources>
