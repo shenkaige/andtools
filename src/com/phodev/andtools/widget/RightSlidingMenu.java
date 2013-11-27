@@ -183,9 +183,9 @@ public class RightSlidingMenu extends ViewGroup {
 			// request show
 			factor = REQUEST_SHOW_FACTOR;
 		}
-		Log.e("ttt", "show length:" + menuShowLength + ",f s l:"
-				+ (menuWidth * factor) + ",menuWidth:" + menuWidth + ",factor:"
-				+ factor + ",isShow:" + isMenuShow());
+		// Log.e("ttt", "show length:" + menuShowLength + ",f s l:"
+		// + (menuWidth * factor) + ",menuWidth:" + menuWidth + ",factor:"
+		// + factor + ",isShow:" + isMenuShow());
 		if (menuShowLength > (menuWidth * factor)) {
 			// show
 			toX = showScrollX;
