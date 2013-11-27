@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.phodev.andtools.widget.RightSlidingMenu xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/right_sliding"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <LinearLayout
+        android:id="@+id/right_sliding_content"
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        android:background="#F00"
+        android:orientation="vertical" >
+
+        <ListView
+            android:id="@+id/right_sliding_content_lv"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:cacheColorHint="#00000000" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/right_sliding_menu"
+        android:layout_width="200dp"
+        android:layout_height="match_parent"
+        android:background="#00F"
+        android:orientation="vertical" >
+
+        <ListView
+            android:id="@+id/right_sliding_menu_lv"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:cacheColorHint="#00000000" />
+    </LinearLayout>
+
+</com.phodev.andtools.widget.RightSlidingMenu>
