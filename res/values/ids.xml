@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item name="card_title" type="id"/>
+
+    <item name="card_title" type="id"/>
+    <item name="right_sliding_content" type="id"/>
+    <item name="right_sliding_menu" type="id"/>
 
 </resources>
