@@ -46,9 +46,27 @@ public class RightSlidingMenu extends ViewGroup {
 		contentView = findViewById(R.id.right_sliding_content);
 	}
 
-	public void setContentView(View contentView, View menuView) {
-		this.contentView = contentView;
-		this.menuView = menuView;
+	/**
+	 * 通过代码设置 content，menu
+	 * 
+	 * @param content
+	 * @param menu
+	 */
+	public void setContentView(View content, View menu) {
+		contentView = content;
+		menuView = menu;
+		//
+		removeAllViewsInLayout();
+		//
+		if (content.getLayoutParams() == null) {
+			content.setLayoutParams(generateDefaultLayoutParams());
+		}
+		if (menu.getLayoutParams() == null) {
+			menu.setLayoutParams(generateDefaultLayoutParams());
+		}
+		addViewInLayout(content, 0, content.getLayoutParams(), true);
+		addViewInLayout(menu, 1, menu.getLayoutParams(), true);
+		forceLayout();
 		invalidate();
 	}
 
