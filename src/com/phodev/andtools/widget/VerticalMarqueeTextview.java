@@ -2,6 +2,7 @@ package com.phodev.andtools.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -29,30 +30,61 @@ public class VerticalMarqueeTextview extends TextView {
 		maxScrollY = getLineCount() * getLineHeight();
 	}
 
-	private boolean hasWindowsFocus;
-	private boolean viewIsVisible;
+	private boolean isFrozenFromWindowFocusChanged = Boolean.FALSE;
+	private boolean isFrozenFromVisible = Boolean.FALSE;
+	//
+	private boolean hasAttachedToWindow;
 
 	@Override
 	public void onWindowFocusChanged(boolean hasWindowFocus) {
 		super.onWindowFocusChanged(hasWindowFocus);
-		this.hasWindowsFocus = hasWindowFocus;
 		// 解决锁屏，但是visible依然是可见的问题
-		checkFrozen();
+		if (hasWindowFocus) {
+			if (isFrozenFromWindowFocusChanged) {
+				isFrozenFromWindowFocusChanged = false;
+				checkFrozen();
+			}
+		} else {// 锁屏的时候，我們也希望凍結
+			isFrozen = true;
+			isFrozenFromWindowFocusChanged = true;
+		}
 	}
 
 	@Override
 	protected void onVisibilityChanged(View changedView, int visibility) {
 		super.onVisibilityChanged(changedView, visibility);
-		viewIsVisible = visibility == View.VISIBLE;
+		if (visibility == View.VISIBLE) {
+			if (isFrozenFromVisible) {
+				isFrozenFromVisible = false;
+				checkFrozen();
+			}
+		} else {
+			isFrozen = true;
+			isFrozenFromVisible = true;
+		}
+	}
+
+	@Override
+	protected void onAttachedToWindow() {
+		super.onAttachedToWindow();
+		hasAttachedToWindow = true;
+		checkFrozen();
+	}
+
+	@Override
+	protected void onDetachedFromWindow() {
+		super.onDetachedFromWindow();
+		hasAttachedToWindow = false;
 		checkFrozen();
 	}
 
 	private void checkFrozen() {
 		boolean oldIsFronze = isFrozen;
-		isFrozen = !(hasWindowsFocus && viewIsVisible);
+		isFrozen = !(hasAttachedToWindow && !isFrozenFromVisible && !isFrozenFromWindowFocusChanged);
+		//
 		// Log.e("ttt", "on checkFrozen,isFrozen:" + isFrozen + ",oldIsFronze:"
-		// + oldIsFronze + ",hasWindowsFocus:" + hasWindowsFocus
-		// + ",viewIsVisible:" + viewIsVisible);
+		// + oldIsFronze + ",hasAttachedToWindow:" + hasAttachedToWindow
+		// + ",viewIsVisible:" + isFrozenFromVisible);
 		if (oldIsFronze) {// 需要还原
 			if (marqueeModel == MarqueeModel.AUTO_ON_VISIBLE) {
 				if (isMarquee) {
