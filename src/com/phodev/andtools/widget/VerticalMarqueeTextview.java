@@ -2,7 +2,6 @@ package com.phodev.andtools.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -25,15 +24,25 @@ public class VerticalMarqueeTextview extends TextView {
 	private int maxScrollY;
 
 	@Override
-	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-		maxScrollY = getLineCount() * getLineHeight();
+	protected void onLayout(boolean changed, int left, int top, int right,
+			int bottom) {
+		super.onLayout(changed, left, top, right, bottom);
+		initMaxScrollAndCheckFrezon();
+	}
+
+	private void checkEnoughToMarquee() {
+		isEnoughToMarquee = maxScrollY > getHeight();
+		// Log.e("ttt", "isEnoughToMarquee:" + isEnoughToMarquee +
+		// ",maxScrollY:"
+		// + maxScrollY + ",vh:" + getHeight() + ",line count:"
+		// + getLineCount() + ",line height:" + getLineHeight());
 	}
 
 	private boolean isFrozenFromWindowFocusChanged = Boolean.FALSE;
 	private boolean isFrozenFromVisible = Boolean.FALSE;
 	//
 	private boolean hasAttachedToWindow;
+	private boolean isEnoughToMarquee = false;
 
 	@Override
 	public void onWindowFocusChanged(boolean hasWindowFocus) {
@@ -78,10 +87,16 @@ public class VerticalMarqueeTextview extends TextView {
 		checkFrozen();
 	}
 
+	@Override
+	public void setText(CharSequence text, BufferType type) {
+		super.setText(text, type);
+		initMaxScrollAndCheckFrezon();
+	}
+
 	private void checkFrozen() {
 		boolean oldIsFronze = isFrozen;
-		isFrozen = !(hasAttachedToWindow && !isFrozenFromVisible && !isFrozenFromWindowFocusChanged);
-		//
+		isFrozen = !(isEnoughToMarquee && hasAttachedToWindow
+				&& !isFrozenFromVisible && !isFrozenFromWindowFocusChanged);
 		// Log.e("ttt", "on checkFrozen,isFrozen:" + isFrozen + ",oldIsFronze:"
 		// + oldIsFronze + ",hasAttachedToWindow:" + hasAttachedToWindow
 		// + ",viewIsVisible:" + isFrozenFromVisible);
@@ -108,14 +123,27 @@ public class VerticalMarqueeTextview extends TextView {
 		}
 	}
 
-	Runnable scrollTextRunnable = new Runnable() {
+	private void initMaxScrollAndCheckFrezon() {
+		post(makeMaxScrollAndCheckFrezon);
+	}
+
+	final Runnable makeMaxScrollAndCheckFrezon = new Runnable() {
+
+		@Override
+		public void run() {
+			maxScrollY = getLineCount() * getLineHeight();
+			checkEnoughToMarquee();
+			checkFrozen();
+		}
+	};
+	final Runnable scrollTextRunnable = new Runnable() {
 		@Override
 		public void run() {
 			if (isMarquee && !isFrozen) {
 				scrollBy(0, SPEED);
 				int scrollY = getScrollY();
 				if (scrollY > maxScrollY) {
-					scrollTo(0, -getMeasuredHeight());
+					scrollTo(0, -getHeight());
 				}
 				checkScroll();
 			}
@@ -150,10 +178,15 @@ public class VerticalMarqueeTextview extends TextView {
 	public static int STATE_MARQUEE_STOPED = 2;
 	/** 因为不可见所以冻结了,该状态会自动还原 */
 	public static int STATE_FROZEN = 3;
+	/** 没有足够的长度可以跑马灯 */
+	public static int STATE_NO_ENOUGH_LENGTH = 4;
 
 	public int getMarqueeState() {
 		if (isFrozen) {
 			return STATE_FROZEN;
+		}
+		if (!isEnoughToMarquee) {
+			return STATE_NO_ENOUGH_LENGTH;
 		}
 		if (isMarquee) {
 			return STATE_MARQUEE_RUNNING;
