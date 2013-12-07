@@ -21,6 +21,11 @@ import com.phodev.andtools.common.CommonParam;
 /**
  * ImageMarqueeView 类似于TextView的Marquee特性
  * 
+ * <pre>
+ * 1,需要进一步优化，Frezon逻辑，参考 {@link# VerticalMarqueeTextview}}}
+ * 2,滚动效果有待提高
+ * </pre>
+ * 
  * @author skg
  * 
  */
@@ -44,7 +49,7 @@ public class ImageMarqueeView extends ImageView {
 	 */
 	private final float MIN_SPEED = 0.2f;// 每STEP_TIME_INTERVAL移动的距离
 	private final float MAX_SPEED = 2.8f;// 每STEP_TIME_INTERVAL移动的距离
-	private final int STEP_TIME_INTERVAL = 30;// 1s=1000ms,每秒24-30帧动画才连贯
+	private final int STEP_TIME_INTERVAL = 1000 / 60;
 	private final int EXPECT_LIFECYCLE_TIME = 5 * 1000;
 	/**
 	 * 根据每步移动的时候，跟希望整个生命周期的时间算出一共要移动多少不，这个结果只是希望的结果，<br>
@@ -414,6 +419,7 @@ public class ImageMarqueeView extends ImageView {
 	 */
 	public void setPauseOnPressed(boolean enable) {
 		pauseOnPressed = enable;
+		setClickable(true);
 	}
 
 	@Override
