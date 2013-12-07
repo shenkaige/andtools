@@ -29,7 +29,7 @@ public class Constants {
 	public static final int block_read_buffer_size = 1024 * 10 * 20;
 	public static final int thread_count = 3;
 	public static final int update_speed_interval_time = 900;// ms
-	public static final String relative_download_path = "ishow/download";
+	public static final String relative_download_path = "phodev/download";
 	public static final String download_file_mode = "rwd";
 	//
 	public static final int THREAD_POOL_CORE_SIZE = thread_count + 1;// 一直保留的线程数
