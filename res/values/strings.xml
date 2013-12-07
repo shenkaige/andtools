@@ -1,8 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">AndroidMemo</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="app_name">Andtools</string>
     <string name="menu_settings">Settings</string>
+
+    <string-array name="disk_names">
+        <item>Pig</item>
+        <item>Rat</item>
+        <item>Ox</item>
+        <item>Tiger</item>
+        <item>Rabbit</item>
+        <item>Dragon</item>
+        <item>Snake</item>
+        <item>Horse</item>
+        <item>Sheep</item>
+        <item>Monkey</item>
+        <item>Rooster</item>
+        <item>Dog</item>
+    </string-array>
 
 </resources>

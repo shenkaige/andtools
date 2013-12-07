@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="disk_names">
+        <item>小猪</item>
+        <item>老鼠</item>
+        <item>黃牛</item>
+        <item>老虎</item>
+        <item>兔子</item>
+        <item>龙王</item>
+        <item>小蛇</item>
+        <item>小马</item>
+        <item>绵羊</item>
+        <item>猴子</item>
+        <item>小鸡</item>
+        <item>小狗</item>
+    </string-array>
+
+</resources>

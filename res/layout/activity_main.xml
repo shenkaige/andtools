@@ -2,33 +2,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:background="#000"
     android:orientation="vertical" >
 
-    <com.phodev.andtools.widget.AlphaLineSpaceTextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="#F00"
-        android:lineSpacingExtra="1dp"
-        android:text="这事一个蛋疼的需求,坑爹的需求,变态需求. 这事一个蛋疼的需求,坑爹的需求,变态需求.这事一个蛋疼的需求,坑爹的需求,变态需求. 这事一个蛋疼的需求,坑爹的需求,变态需求 "
-        android:textColor="#FF0" />
-
-    <com.phodev.andtools.widget.AlphaLineSpaceTextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/note_bg"
-        android:lineSpacingExtra="10sp"
-        android:text="这事一个蛋疼的需求,坑爹的需求,变态需求. 这事一个蛋疼的需求,坑爹的需求,变态需求.这事一个蛋疼的需求,坑爹的需求,变态需求. 这事一个蛋疼的需求,坑爹的需求,变态需求 "
-        android:textColor="#FFe3167d" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="下面是原图" />
-
-    <ImageView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:src="@drawable/note_bg" />
+    <include layout="@layout/common_listview" />
 
 </LinearLayout>
