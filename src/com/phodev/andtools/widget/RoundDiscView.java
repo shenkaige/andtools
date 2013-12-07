@@ -25,22 +25,18 @@ import com.phodev.andtools.common.CommonParam;
  */
 public class RoundDiscView extends View {
 	private static final String TAG = "RoundDiscView";
-	private float canvasCenterX;// 画布中心坐标
-	private float canvasCenterY;// 画布中心坐标
-	private int discWidth;// 圆盘宽度
-	private int discHeight;// 圆盘高度
-	private float discLeft;// 圆盘的Left
-	private float discTop;// 圆盘的Top
-	private float pointerLeft;// 针的Left
-	private float pointerTop;// 针的Top
-	private float pointerHatLeft;// 针盖的Left
-	private float pointerHatTop;// 针盖的Top
-	private float discCentreY;// 圆盘的圆心坐标
-	private float discCentreX;// 圆盘的圆心坐标
-
-	private int discRadius;// 半径
-	private int discInnerRradius;// 内圆
-
+	private float viewCenterX;// 画布中心坐标
+	private float viewCenterY;// 画布中心坐标
+	private int radius;// 半径
+	private int innerRradius;// 内圆
+	// draw size
+	private float discDrawLeft;// 圆盘的Left
+	private float discDrawTop;// 圆盘的Top
+	private float pDrawLeft;// 针的Left
+	private float pDrawTop;// 针的Top
+	private float pHatDrawLeft;// 针盖的Left
+	private float pHatDrawTop;// 针盖的Top
+	// draw size--end
 	private Context mContext;
 	private GestureDetector gesture;
 	private Paint defPaint;
@@ -94,30 +90,36 @@ public class RoundDiscView extends View {
 			disc_scale = minVSize / (float) discSize;
 		}
 		setMeasuredDimension(vw, vh);
-		configSizeInfo(vw, vh);
+		configSizeInfo(vw, vh, disc_scale);
 	}
 
-	private void configSizeInfo(int viewWidth, int viewHeight) {
+	private void configSizeInfo(int viewWidth, int viewHeight, float disc_scale) {
 		if (b_discBg == null || b_pointer == null || b_pointerHat == null) {
 			return;
 		}
-		discWidth = b_discBg.getWidth();
-		discHeight = b_discBg.getHeight();
-		discRadius = discWidth / 2;// 半径
-		discInnerRradius = b_pointerHat.getWidth() / 2;// 内圆
-		canvasCenterX = (float) viewWidth / 2;
-		canvasCenterY = (float) viewHeight / 2;
+		int discWidth = b_discBg.getWidth();
+		int discHeight = b_discBg.getHeight();
+		radius = (int) (discWidth * disc_scale / 2);// 半径
+		innerRradius = (int) (b_pointerHat.getWidth() * disc_scale / 2);// 内圆
+		viewCenterX = (float) viewWidth / 2;
+		viewCenterY = (float) viewHeight / 2;
 
-		discTop = (viewHeight - discHeight) / 2;
-		discLeft = (viewWidth - discWidth) / 2;
+		discDrawTop = (viewHeight - discHeight) / 2;
+		discDrawLeft = (viewWidth - discWidth) / 2;
 
-		discCentreY = discHeight / 2 + discTop;
-		discCentreX = discWidth / 2 + discLeft;
+		pDrawLeft = viewCenterX - b_pointer.getWidth() / 2f;
+		pDrawTop = viewCenterY - b_pointer.getHeight();
+		pHatDrawLeft = viewCenterX - b_pointerHat.getWidth() / 2f;
+		pHatDrawTop = viewCenterY - b_pointerHat.getHeight() / 2f;
+	}
 
-		pointerLeft = canvasCenterX - b_pointer.getWidth() / 2f;
-		pointerTop = canvasCenterY - b_pointer.getHeight();
-		pointerHatLeft = canvasCenterX - b_pointerHat.getWidth() / 2f;
-		pointerHatTop = canvasCenterY - b_pointerHat.getHeight() / 2f;
+	/**
+	 * 获取半径
+	 * 
+	 * @return
+	 */
+	public int getRadius() {
+		return radius;
 	}
 
 	private float anchorX;// Touch的Down事件触发点
@@ -150,7 +152,7 @@ public class RoundDiscView extends View {
 		case MotionEvent.ACTION_MOVE:
 			if (!isClick && !inInnerCircleArea(r)) {
 				updateDiscDegress(getDegrees(event, anchorX, anchorY,
-						discCentreX, discCentreY));
+						viewCenterX, viewCenterY));
 				result = true;
 			}
 			break;
@@ -171,8 +173,8 @@ public class RoundDiscView extends View {
 	private float getDistanceFromDiscCenter(MotionEvent upPoint) {
 		float x = upPoint.getX();
 		float y = upPoint.getY();
-		y = Math.abs(y - discCentreY);
-		x = Math.abs(x - discCentreX);
+		y = Math.abs(y - viewCenterY);
+		x = Math.abs(x - viewCenterX);
 		double r = Math.sqrt(x * x + y * y);
 		return (float) r;
 	}
@@ -184,9 +186,7 @@ public class RoundDiscView extends View {
 	 * @return
 	 */
 	private boolean inInnerCircleArea(float distToCenterPoint) {
-		if (distToCenterPoint < discInnerRradius)
-			return true;
-		return false;
+		return distToCenterPoint < innerRradius;
 	}
 
 	/**
@@ -196,9 +196,7 @@ public class RoundDiscView extends View {
 	 * @return
 	 */
 	private boolean inDisckArea(float distToCenterPoint) {
-		if (distToCenterPoint < discRadius)
-			return true;
-		return false;
+		return distToCenterPoint < radius;
 	}
 
 	/**
@@ -224,14 +222,11 @@ public class RoundDiscView extends View {
 				return false;
 			float dist = getDistanceFromDiscCenter(e);
 			boolean isInnerCircleArea = inInnerCircleArea(dist);
-			if (mDiscListener != null) {
-				if (isInnerCircleArea) {
-					mDiscListener.onDiscCenterClick();
-				} else {
-					mDiscListener.onDiscAngleClick(this, getMappingIndex());
+			if (isInnerCircleArea) {
+				if (mDiscListener != null) {
+					mDiscListener.onCenterClick(this);
 				}
-			}
-			if (!isInnerCircleArea) {
+			} else {
 				innerHandleDiscClick(e);
 			}
 			return true;
@@ -268,12 +263,19 @@ public class RoundDiscView extends View {
 	private void innerHandleDiscClick(MotionEvent e) {
 		// preMappingIndex = -1;//
 		// 清空历史记录，及时点击的是当前指针指向的index，也依然会触发onMappingChange
-		float rX = canvasCenterX;
+		float rX = viewCenterX;
 		float rY = 2;// 大于0 小于canvasCenterY都可以
 		float degrees = getAbsRawDegrees(e.getX(), e.getY(), rX, rY,
-				canvasCenterX, canvasCenterY);
-		if (e.getX() <= canvasCenterX) {
+				viewCenterX, viewCenterY);
+		if (e.getX() <= viewCenterX) {
 			degrees *= -1;
+		}
+		//
+		if (mDiscListener != null) {
+			int i = getMappingIndexByDegress(degrees + getDiscStateDegrees());
+			if (mDiscListener.onAngleItemClick(this, i)) {
+				return;
+			}
 		}
 		// 当一个区域被点击的时候，旋转到该区域
 		spinWithDegrees(degrees, speed_for_click_spin);
@@ -333,12 +335,12 @@ public class RoundDiscView extends View {
 		// 根据touch的坐标旋转，不可以超出touch的坐标范围
 		double la, lb;// 边a，b
 		double a, b, c;
-		la = Math.abs(preY - discCentreY);
-		lb = Math.abs(preX - discCentreX);
+		la = Math.abs(preY - viewCenterY);
+		lb = Math.abs(preX - viewCenterX);
 		a = Math.sqrt(lb * lb + la * la);
 
-		la = Math.abs(curY - discCentreY);
-		lb = Math.abs(curX - discCentreX);
+		la = Math.abs(curY - viewCenterY);
+		lb = Math.abs(curX - viewCenterX);
 		b = Math.sqrt(lb * lb + la * la);
 
 		la = Math.abs(curY - preY);
@@ -438,23 +440,70 @@ public class RoundDiscView extends View {
 	@Override
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
+		if (isDestroy) {
+			return;
+		}
+		int mappindIndex = getMappingIndex();
 		int c_scale_count = canvas.save();
-		canvas.scale(disc_scale, disc_scale, canvasCenterX, canvasCenterY);
+		canvas.scale(disc_scale, disc_scale, viewCenterX, viewCenterY);
 		float canvasDegrees = -discStateDegrees;// 旋转画布跟旋转图片是相反的角度所以要取反
 		// 清除画布//surface view
 		// canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 		int c_rotate_count = canvas.save();
-		canvas.rotate(canvasDegrees, canvasCenterX, canvasCenterY);
-		canvas.drawBitmap(b_discBg, discLeft, discTop, defPaint);
+		canvas.rotate(canvasDegrees, viewCenterX, viewCenterY);
+		canvas.drawBitmap(b_discBg, discDrawLeft, discDrawTop, defPaint);
 		canvas.restoreToCount(c_rotate_count);
+		decorateDiscDraw(canvas, DiscDecorater.LAYER_BG, mappindIndex);
 		// 先画针，再画针盖
-		canvas.drawBitmap(b_pointer, pointerLeft, pointerTop, defPaint);
-		canvas.drawBitmap(b_pointerHat, pointerHatLeft, pointerHatTop, defPaint);
+		canvas.drawBitmap(b_pointer, pDrawLeft, pDrawTop, defPaint);
+		decorateDiscDraw(canvas, DiscDecorater.LAYER_POINTER, mappindIndex);
+		//
+		canvas.drawBitmap(b_pointerHat, pHatDrawLeft, pHatDrawTop, defPaint);
+		decorateDiscDraw(canvas, DiscDecorater.LAYER_POINTER_HAT, mappindIndex);
+		//
 		canvas.restoreToCount(c_scale_count);
+		decorateDiscDraw(canvas, DiscDecorater.LAYER_LASTER, mappindIndex);
+	}
 
+	private void decorateDiscDraw(Canvas canvas, int layer, int mappindIndex) {
+		if (mDiscDecorater != null) {
+			mDiscDecorater.decorate(this, canvas, viewCenterX, viewCenterY,
+					mappindIndex, layer);
+		}
 	}
 
 	// ----------------------------------------------draw disc end--------
+
+	public interface DiscDecorater {
+		/** 第一个Layer */
+		public static final int LAYER_BG = 1;
+		/** 指针Layer */
+		public static final int LAYER_POINTER = 2;
+		/** 指针帽子Layer */
+		public static final int LAYER_POINTER_HAT = 3;
+		/** 最上面Layer */
+		public static final int LAYER_LASTER = 4;
+
+		public void init(RoundDiscView disc);
+
+		public void decorate(RoundDiscView rd, Canvas canvas, float centerX,
+				float centerY, int mapping, int layer);
+
+		public void destroy(RoundDiscView disc);
+	}
+
+	private DiscDecorater mDiscDecorater;
+
+	public void setDiscDecorater(DiscDecorater decorater) {
+		if (mDiscDecorater != null) {
+			mDiscDecorater.destroy(this);
+		}
+		mDiscDecorater = decorater;
+		if (mDiscDecorater != null) {
+			mDiscDecorater.init(this);
+		}
+	}
+
 	/**
 	 * 负责处理onFling的滑动
 	 */
@@ -464,7 +513,7 @@ public class RoundDiscView extends View {
 				float velocityY) {
 			float ab = velocityX * velocityY;
 			double c = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-			float degreesV = (float) (((ab / c) / (discRadius * Math.PI)) * 180);
+			float degreesV = (float) (((ab / c) / (radius * Math.PI)) * 180);
 			float taskDegress;
 			if (lastChangedDegrees < 0) {
 				if (degreesV < 0) {
@@ -506,13 +555,24 @@ public class RoundDiscView extends View {
 		return BitmapFactory.decodeResource(mContext.getResources(), resId);
 	}
 
+	private boolean isDestroy = false;
+
+	public boolean isDeestroy() {
+		return isDestroy;
+	}
+
 	/**
 	 * 释放view,释放过后就不能在使用了
 	 */
 	public void releaseView() {
+		isDestroy = true;
+		//
 		releaseBitmap(b_discBg);
 		releaseBitmap(b_pointer);
 		releaseBitmap(b_pointerHat);
+		if (mDiscDecorater != null) {
+			mDiscDecorater.destroy(this);
+		}
 	}
 
 	private void releaseBitmap(Bitmap b) {
@@ -529,17 +589,23 @@ public class RoundDiscView extends View {
 		 * @param selectedIndex
 		 *            圆盘旋转后，指针下面对应的索引
 		 */
-		public void onPointerMappingChanged(RoundDiscView rd, int mappingIndex);
+		public void onMappingChanged(RoundDiscView rd, int index);
 
 		/**
-		 * 角度区域对应被赋予的意义通过degreesIndex来获得
+		 * 一个角度区域被点击
 		 * 
 		 * @param rd
-		 * @param degreesIndex
+		 * @param index
+		 * @return true标示拦截此次点击
 		 */
-		public void onDiscAngleClick(RoundDiscView rd, int degreesIndex);
+		public boolean onAngleItemClick(RoundDiscView rd, int index);
 
-		public void onDiscCenterClick();
+		/**
+		 * 中间区域被点击
+		 * 
+		 * @param rd
+		 */
+		public void onCenterClick(RoundDiscView rd);
 
 	}
 
@@ -562,7 +628,7 @@ public class RoundDiscView extends View {
 		//
 		private float mStartSpeed;
 		private float currentSpeed;
-		private float total_dist = 0;
+		// private float total_dist = 0;
 		private boolean isRunning = false;
 
 		/**
@@ -578,7 +644,7 @@ public class RoundDiscView extends View {
 		@Override
 		public void run() {
 			if (Math.abs(currentSpeed) > 0) {
-				total_dist += currentSpeed;
+				// total_dist += currentSpeed;
 				float d_f_f = disc_max_friction_factor
 						* (1 - currentSpeed / mStartSpeed);
 				if (d_f_f > disc_max_friction_factor) {
@@ -705,17 +771,21 @@ public class RoundDiscView extends View {
 			}
 		}
 		lastCalculateIndexDegrees = rootDegrees;
-		rootDegrees %= 360;
-		if (rootDegrees < 0) {
-			rootDegrees += 360;
+		return getMappingIndexByDegress(rootDegrees);
+	}
+
+	private int getMappingIndexByDegress(float degrees) {
+		degrees %= 360;
+		if (degrees < 0) {
+			degrees += 360;
 		}
 		int i = 1;
-		if (rootDegrees >= 345 || rootDegrees <= 15) {
+		if (degrees >= 345 || degrees <= 15) {
 			i = 1;
 		} else {
-			rootDegrees += 15;
-			i = (int) rootDegrees / 30;
-			if (rootDegrees % 30 != 0) {
+			degrees += 15;
+			i = (int) degrees / 30;
+			if (degrees % 30 != 0) {
 				i++;
 			}
 		}
@@ -746,7 +816,7 @@ public class RoundDiscView extends View {
 			int index = getMappingIndex();
 			if (lastMappingIndex != index) {
 				lastMappingIndex = index;
-				mDiscListener.onPointerMappingChanged(this, index);
+				mDiscListener.onMappingChanged(this, index);
 			}
 		}
 	}
