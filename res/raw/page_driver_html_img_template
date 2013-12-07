@@ -1,0 +1,1 @@
+<p><center><img id="%s" src="%s" onclick="phodev_jsh.onImageClick(%s,%s)" onerror="this.src='%s';phodev_jsh.onImgError(%s)"/></center></p>

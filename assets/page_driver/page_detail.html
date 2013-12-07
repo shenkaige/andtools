@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<style type="text/css">
+body {
+	font-size: 18px;
+	color: #4b4b4b;
+	text-align: justify;
+	line-height: 1.5;
+}
+
+img {
+	border: #03C 1px 1px 1px 1px;
+}
+</style>
+</head>
+
+<body>
+
+</body>
+<script>
+	var bodyContent = phodev_jsh.getPageHtmlContent();
+	var textSize = phodev_jsh.getTextSize();
+	var textColor = phodev_jsh.getTextColor();
+	var backgroudColor = phodev_jsh.getBackgroudColor();
+	if (textSize != null) {
+		setTextSize(textSize);
+	}
+	if (textColor != null) {
+		setTextColor(textColor);
+	}
+	if (backgroudColor != null) {
+		setBackcolor(backgroudColor);
+	}
+	document.body.innerHTML = bodyContent
+	function fillImage(imgId, imgPath) {
+		var imgTagId = imgId
+		var imgObject = document.getElementById(imgTagId);
+		imgObject.src = imgPath;
+		phodev_jsh.onFillPicFinish(imgId);
+	}
+	function setTextSize(textSize) {
+		document.getElementsByTagName("body").item(0).style.fontSize = textSize;
+	}
+	function setTextColor(textColor) {
+		document.getElementsByTagName("body").item(0).style.color = textColor;
+	}
+	function setBackcolor(pageBackcolor) {
+		document.getElementsByTagName("body").item(0).style.backgroundColor = pageBackcolor;
+	}
+</script>
+</html>
