@@ -21,6 +21,7 @@ import com.phodev.andtools.samples.ImageMarqueeFragment;
 import com.phodev.andtools.samples.RightSlidingMenuFragment;
 import com.phodev.andtools.samples.RoundDiscFragment;
 import com.phodev.andtools.samples.VerticleMarqueeTextFragment;
+import com.phodev.andtools.samples.WebPageDriverFragment;
 import com.phodev.andtools.samples.inner.InnerFragment;
 
 public class MainActivity extends Activity {
@@ -37,6 +38,7 @@ public class MainActivity extends Activity {
 		data.add(RoundDiscFragment.class);
 		data.add(ImageMarqueeFragment.class);
 		data.add(DonwloadFragment.class);
+		data.add(WebPageDriverFragment.class);
 	}
 
 	@Override
