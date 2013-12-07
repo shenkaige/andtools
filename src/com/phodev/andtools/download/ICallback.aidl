@@ -6,21 +6,21 @@ import com.phodev.andtools.download.DownloadFile;
 		 * 
 		 * @param file
 		 */
-		 void onDownloadFileStatusChanged(out DownloadFile file);
+		 void onDownloadFileStatusChanged(in DownloadFile file);
 	
 		/**
 		 * 添加新的下载任务
 		 * 
 		 * @param file
 		 */
-		 void onDownloadFileAdd(out DownloadFile file);
+		 void onDownloadFileAdd(in DownloadFile file);
 	
 		/**
 		 * 下载任务被移除
 		 * 
 		 * @param file
 		 */
-		 void onDownloadFileRemove(out DownloadFile file);
+		 void onDownloadFileRemove(in DownloadFile file);
 	
 		/**
 		 * 下载任务进度的变化(单位都是byte)
