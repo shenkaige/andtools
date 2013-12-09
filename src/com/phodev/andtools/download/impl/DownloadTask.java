@@ -132,6 +132,17 @@ public class DownloadTask {
 		 * 取消任务
 		 */
 		public void stop() {
+			innerStopAllLoader();
+			if (downloadFile != null
+					&& downloadFile.getStatus() == DownloadFile.status_download_loading) {
+				downloadFile.setStatus(DownloadFile.status_download_paused);
+				recorder.updateFile(context, downloadFile);
+				notifyFileStatusChange();
+			}
+		}
+
+		// 取消停止loader
+		private void innerStopAllLoader() {
 			if (interrupt) {
 				return;
 			}
@@ -146,12 +157,6 @@ public class DownloadTask {
 			}
 			if (futrue != null && !futrue.isCancelled()) {
 				futrue.cancel(true);
-			}
-			//
-			if (downloadFile != null) {
-				downloadFile.setStatus(DownloadFile.status_download_paused);
-				recorder.updateFile(context, downloadFile);
-				notifyFileStatusChange();
 			}
 		}
 
@@ -313,7 +318,7 @@ public class DownloadTask {
 					if (taskListener != null) {
 						taskListener.onDownloadDone(downloadFile);
 					}
-					stop();
+					innerStopAllLoader();
 					break;
 				}
 			}
