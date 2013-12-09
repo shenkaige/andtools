@@ -147,6 +147,12 @@ public class DownloadTask {
 			if (futrue != null && !futrue.isCancelled()) {
 				futrue.cancel(true);
 			}
+			//
+			if (downloadFile != null) {
+				downloadFile.setStatus(DownloadFile.status_download_paused);
+				recorder.updateFile(context, downloadFile);
+				notifyFileStatusChange();
+			}
 		}
 
 		@Override
@@ -292,7 +298,7 @@ public class DownloadTask {
 				// + speed / 1024 + "kb/s");
 				// DEBUG-end
 
-				// TODO控制优化
+				// TODO 控制优化
 				recorder.updateBlockProgress(context, blocks);
 				if (taskListener != null) {
 					taskListener.onProgrees(downloadFile, loadedSize, speed);
