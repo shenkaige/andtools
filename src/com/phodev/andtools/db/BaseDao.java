@@ -125,18 +125,23 @@ public abstract class BaseDao<T> {
 			}
 			return;
 		}
-		db.beginTransaction();
-		//
-		ContentValues cv = new ContentValues();
-		for (T d : dataList) {
-			if (d == null) {
-				continue;
+		try {
+			db.beginTransaction();
+			//
+			ContentValues cv = new ContentValues();
+			for (T d : dataList) {
+				if (d == null) {
+					continue;
+				}
+				innserAddOrUpdate(db, d, cv);
 			}
-			innserAddOrUpdate(db, d, cv);
+			//
+			db.setTransactionSuccessful();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			db.endTransaction();
 		}
-		//
-		db.setTransactionSuccessful();
-		db.endTransaction();
 		askCloseDatabase(db);
 		if (CommonParam.DEBUG) {
 			log("addOrUpdate succes, data list size:" + dataList.size());
@@ -163,15 +168,20 @@ public abstract class BaseDao<T> {
 			}
 			return;
 		}
-		db.beginTransaction();
-		for (T d : dataList) {
-			if (d != null) {
-				db.delete(Table_Name, makeDeleteWhere(d), null);
-				onAfterDelete(db, d);
+		try {
+			db.beginTransaction();
+			for (T d : dataList) {
+				if (d != null) {
+					db.delete(Table_Name, makeDeleteWhere(d), null);
+					onAfterDelete(db, d);
+				}
 			}
+			db.setTransactionSuccessful();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			db.endTransaction();
 		}
-		db.setTransactionSuccessful();
-		db.endTransaction();
 		askCloseDatabase(db);
 		if (CommonParam.DEBUG) {
 			log("delete succes, data list size:" + dataList.size());
