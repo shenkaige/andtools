@@ -81,7 +81,7 @@ public class ListViewFixIndicators extends ListView {
 		if (upScrollHintView == null || upScrollHintView == null) {
 			return;
 		}
-		if (totalItemCount <= visibleItemCount) {
+		if (totalItemCount <= visibleItemCount || totalItemCount <= 0) {
 			checkVisibility(upScrollHintView, View.INVISIBLE);
 			checkVisibility(downScrollHintView, View.INVISIBLE);
 		} else {
