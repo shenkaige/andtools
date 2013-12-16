@@ -120,13 +120,14 @@ public class ListViewFixIndicators extends ListView {
 			int visibleItemCount;
 			int totalItemCount;
 			ListAdapter ad = getAdapter();
-			if (ad == null) {
+			if (ad == null || ad.getCount() <= 0) {
 				firstVisibleItem = 0;
 				visibleItemCount = 0;
 				totalItemCount = 0;
 			} else {
 				firstVisibleItem = getFirstVisiblePosition();
-				visibleItemCount = getLastVisiblePosition() - firstVisibleItem;
+				visibleItemCount = getLastVisiblePosition() - firstVisibleItem
+						+ 1;
 				totalItemCount = ad.getCount();
 			}
 			syncScrollableTag(firstVisibleItem, visibleItemCount,
