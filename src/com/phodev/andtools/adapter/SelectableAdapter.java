@@ -14,9 +14,9 @@ import java.util.Map;
  * @param <T>
  */
 public abstract class SelectableAdapter<K, T> extends InnerBaseAdapter<T> {
-	public void setChecked(int position, boolean isChecked) {
+	public boolean setChecked(int position, boolean isChecked) {
 		T t = getData(position);
-		innerSetChecked(position, t, isChecked);
+		return innerSetChecked(position, t, isChecked);
 	}
 
 	/**
@@ -25,23 +25,37 @@ public abstract class SelectableAdapter<K, T> extends InnerBaseAdapter<T> {
 	 * @param t
 	 * @param isChecked
 	 */
-	public void setCheckedById(T t, boolean isChecked) {
+	public boolean setCheckedById(T t, boolean isChecked) {
 		int position = mData.indexOf(t);
 		if (position < 0) {
-			return;
+			return false;
 		}
-		innerSetChecked(position, t, isChecked);
+		return innerSetChecked(position, t, isChecked);
 	}
 
-	private void innerSetChecked(int position, T t, boolean isChecked) {
+	private boolean broadcasting = false;
+
+	private boolean innerSetChecked(int position, T t, boolean isChecked) {
+		if (mSelectInterceptor != null && mSelectInterceptor.interceptSelect(t)) {
+			return false;
+		}
 		if (t != null) {
 			if (isChecked) {
 				selectmap.put(getItemCheckRecordKey(t), t);
 			} else {
 				selectmap.remove(getItemCheckRecordKey(t));
 			}
+			if (broadcasting) {
+				return true;
+			}
+			broadcasting = true;
 			onSelectChanged(position, isChecked);
+			if (mChangedListener != null) {
+				mChangedListener.onSelectChanged(this, position, t, isChecked);
+			}
+			broadcasting = false;
 		}
+		return true;
 	}
 
 	/**
@@ -122,5 +136,50 @@ public abstract class SelectableAdapter<K, T> extends InnerBaseAdapter<T> {
 	}
 
 	protected void onSelectChanged(int position, boolean isSelected) {
+	}
+
+	private boolean mSelectModel = false;
+	private boolean mBroadcasting = false;
+
+	public void setSelectModel(boolean selectMode) {
+		if (mSelectModel == selectMode) {
+			return;
+		}
+		this.mSelectModel = selectMode;
+		if (!mBroadcasting) {
+			mBroadcasting = true;
+			onSelectModelChanged(selectMode);
+			mBroadcasting = false;
+		}
+		if (!mSelectModel) {
+			selectmap.clear();
+		}
+	}
+
+	public boolean isSelectModel() {
+		return mSelectModel;
+	}
+
+	protected abstract void onSelectModelChanged(boolean selectModel);
+
+	public interface OnSelectChangedListener<Data> {
+		public void onSelectChanged(SelectableAdapter<?, Data> adapter,
+				int position, Data item, boolean checked);
+	}
+
+	public interface SelectInterceptor<D> {
+		public boolean interceptSelect(D data);
+	}
+
+	private SelectInterceptor<T> mSelectInterceptor;
+
+	public void setSelectInterceptor(SelectInterceptor<T> interceptor) {
+		mSelectInterceptor = interceptor;
+	}
+
+	private OnSelectChangedListener<T> mChangedListener;
+
+	public void setSelectChangedListener(OnSelectChangedListener<T> l) {
+		mChangedListener = l;
 	}
 }

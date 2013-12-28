@@ -54,4 +54,9 @@ public class SelectableAdapterSimaple extends
 		return t.hashCode();
 	}
 
+	@Override
+	protected void onSelectModelChanged(boolean selectModel) {
+		notifyDataSetChanged();
+	}
+
 }

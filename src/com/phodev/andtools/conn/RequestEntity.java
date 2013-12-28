@@ -232,4 +232,41 @@ public class RequestEntity {
 			recyleList.add(this);
 		}
 	}
+	//support upload progress track
+	// public class CustormMultipartEntity extends MultipartEntity {
+	// private RequestEntity requestEntity;
+	// public CustormMultipartEntity(RequestEntity re) {
+	// requestEntity = re;
+	// }
+	//
+	// @Override
+	// public void writeTo(OutputStream outstream) throws IOException {
+	// super.writeTo(new ProgressOutputStream(outstream));
+	// }
+	//
+	// class ProgressOutputStream extends OutputStream {
+	// OutputStream targetOutputStream;
+	//
+	// ProgressOutputStream(OutputStream target) {
+	// targetOutputStream = target;
+	// }
+	//
+	// @Override
+	// public void write(byte[] buffer) throws IOException {
+	// targetOutputStream.write(buffer);
+	// }
+	//
+	// @Override
+	// public void write(byte[] buffer, int offset, int count)
+	// throws IOException {
+	// targetOutputStream.write(buffer, offset, count);
+	// }
+	//
+	// @Override
+	// public void write(int oneByte) throws IOException {
+	// targetOutputStream.write(oneByte);
+	// }
+	//
+	// }
+	// }
 }
