@@ -15,9 +15,11 @@ import android.widget.TextView;
 
 import com.phodev.andtools.adapter.InnerBaseAdapter;
 import com.phodev.andtools.common.SimpleDesc;
+import com.phodev.andtools.samples.ChatViewFragment;
 import com.phodev.andtools.samples.DonwloadFragment;
 import com.phodev.andtools.samples.HttpConnectionFragment;
 import com.phodev.andtools.samples.ImageMarqueeFragment;
+import com.phodev.andtools.samples.QuickReturnFragment;
 import com.phodev.andtools.samples.RightSlidingMenuFragment;
 import com.phodev.andtools.samples.RoundDiscFragment;
 import com.phodev.andtools.samples.VerticleMarqueeTextFragment;
@@ -32,6 +34,8 @@ public class MainActivity extends Activity {
 		adapter = new FragmentAdapter();
 		adapter.setData(data, false);
 		//
+		data.add(QuickReturnFragment.class);
+		data.add(ChatViewFragment.class);
 		data.add(HttpConnectionFragment.class);
 		data.add(RightSlidingMenuFragment.class);
 		data.add(VerticleMarqueeTextFragment.class);

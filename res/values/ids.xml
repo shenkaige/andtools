@@ -4,5 +4,6 @@
     <item name="card_title" type="id"/>
     <item name="right_sliding_content" type="id"/>
     <item name="right_sliding_menu" type="id"/>
+    <item name="quick_return_content" type="id"/>
 
 </resources>

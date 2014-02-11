@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000"
+    android:padding="5dp" >
+
+    <com.phodev.andtools.widget.QuickReturnLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="#8fFF0000"
+            android:gravity="center"
+            android:text="header 0" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="#8f00FF00"
+            android:gravity="center"
+            android:text="header 1" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="#8f0000FF"
+            android:gravity="center"
+            android:text="header 2" />
+        <ListView
+            android:id="@id/quick_return_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FFFF00" />
+    </com.phodev.andtools.widget.QuickReturnLayout>
+
+</LinearLayout>
