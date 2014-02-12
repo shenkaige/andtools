@@ -57,18 +57,15 @@ public class QuickReturnLayout extends ViewGroup {
 			titleShowableHeight = 0;
 		}
 		//
-		boolean isEndLayout = false;
 		int topOffset = 0;
 		for (int i = 0; i < childCount; i++) {
 			View c = getChildAt(i);
+			if (c.getVisibility() == View.GONE) {
+				continue;
+			}
 			if (c.getId() == id_content) {
 				contentView = c;
 				continue;
-			}
-			if (isEndLayout) {
-				c.setVisibility(View.INVISIBLE);
-			} else {
-				c.setVisibility(View.VISIBLE);
 			}
 			ct = topOffset;
 			cb = ct + c.getMeasuredHeight();
@@ -77,7 +74,6 @@ public class QuickReturnLayout extends ViewGroup {
 				ct -= cb - titleShowableHeight;
 				cb = titleShowableHeight;
 				c.layout(cl, ct, cr, cb);
-				isEndLayout = true;
 			} else {
 				c.layout(cl, ct, cr, cb);
 			}
@@ -87,7 +83,7 @@ public class QuickReturnLayout extends ViewGroup {
 		// layout content view
 		if (contentView != null) {
 			ct = topOffset;
-			cb = ct + h;
+			cb = h;
 			contentView.layout(cl, ct, cr, cb);
 		}
 	}
@@ -108,6 +104,9 @@ public class QuickReturnLayout extends ViewGroup {
 		View contentView = null;
 		for (int i = 0; i < childCount; i++) {
 			View child = getChildAt(i);
+			if (child.getVisibility() == View.GONE) {
+				continue;
+			}
 			if (child.getId() == id_content) {
 				contentView = child;
 				continue;
