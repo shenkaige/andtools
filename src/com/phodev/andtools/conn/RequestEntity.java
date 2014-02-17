@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Future;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
@@ -18,6 +19,7 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 
+import com.phodev.andtools.conn.ConnectionHelper.RequestHolder;
 import com.phodev.andtools.conn.ConnectionHelper.RequestMethod;
 import com.phodev.andtools.conn.ConnectionHelper.RequestReceiver;
 
@@ -37,6 +39,7 @@ public class RequestEntity {
 	private int requestId;
 	private String defCharset;
 	private Object mTag;
+	private RequestHolder canceler;
 
 	private RequestEntity() {
 
@@ -144,11 +147,11 @@ public class RequestEntity {
 		}
 	}
 
-	public RequestReceiver getRequestReceiver() {
+	protected RequestReceiver getRequestReceiver() {
 		return requestReceiver;
 	}
 
-	public void setRequestReceiver(RequestReceiver receiver) {
+	protected void setRequestReceiver(RequestReceiver receiver) {
 		this.requestReceiver = receiver;
 	}
 
@@ -210,6 +213,43 @@ public class RequestEntity {
 		return mTag;
 	}
 
+	private boolean isCanceled = false;
+	private boolean isCancelStateSend = false;
+
+	protected RequestHolder getCanceler() {
+		return canceler;
+	}
+
+	protected void setCanceler(RequestHolder canceler) {
+		this.canceler = canceler;
+	}
+
+	protected boolean isCancelStateSend() {
+		return isCancelStateSend;
+	}
+
+	protected void setCancelStateSend(boolean send) {
+		isCancelStateSend = send;
+	}
+
+	protected void setCanceled(boolean canceled) {
+		this.isCanceled = canceled;
+	}
+
+	public boolean isCanceled() {
+		return isCanceled;
+	}
+
+	private Future<?> requestTaskFuture;
+
+	protected void setRequestTaskFuture(Future<?> future) {
+		requestTaskFuture = future;
+	}
+
+	protected Future<?> getRequestTaskFuture() {
+		return requestTaskFuture;
+	}
+
 	private final static List<RequestEntity> recyleList = new ArrayList<RequestEntity>();
 
 	public static RequestEntity obtain() {
@@ -228,11 +268,15 @@ public class RequestEntity {
 		requestMethod = null;
 		resultCode = 0;
 		defCharset = null;
+		isCanceled = false;
+		isCancelStateSend = false;
+		setRequestTaskFuture(null);
+		canceler = null;
 		if (recyleList.size() < 6) {
 			recyleList.add(this);
 		}
 	}
-	//support upload progress track
+	// support upload progress track
 	// public class CustormMultipartEntity extends MultipartEntity {
 	// private RequestEntity requestEntity;
 	// public CustormMultipartEntity(RequestEntity re) {

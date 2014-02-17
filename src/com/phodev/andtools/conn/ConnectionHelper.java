@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -112,19 +113,19 @@ public class ConnectionHelper {
 	 *            在onFinish的会返回requestId，标示是哪个一个请求
 	 * @param rr
 	 */
-	public void httpGet(String url, int requestId, RequestReceiver rr) {
+	public RequestHolder httpGet(String url, int requestId, RequestReceiver rr) {
 		RequestEntity entity = RequestEntity.obtain();
 		entity.setUrl(url);
 		entity.setRequestReceiver(rr);
 		entity.setMethod(RequestMethod.GET);
 		entity.setRequestId(requestId);
-		httpExecute(entity);
+		return httpExecute(entity);
 	}
 
-	public void httpPost(String url, int requestId,
+	public RequestHolder httpPost(String url, int requestId,
 			List<NameValuePair> postValues, RequestReceiver rr) {
 		String n = null;
-		httpPost(url, requestId, postValues, n, rr);
+		return httpPost(url, requestId, postValues, n, rr);
 	}
 
 	/**
@@ -136,7 +137,7 @@ public class ConnectionHelper {
 	 * @param charset
 	 * @param rr
 	 */
-	public void httpPost(String url, int requestId,
+	public RequestHolder httpPost(String url, int requestId,
 			List<NameValuePair> postValues, String charset, RequestReceiver rr) {
 		RequestEntity entity = RequestEntity.obtain();
 		entity.setUrl(url);
@@ -144,12 +145,12 @@ public class ConnectionHelper {
 		entity.setPostEntitiy(postValues, charset);
 		entity.setMethod(RequestMethod.POST);
 		entity.setRequestId(requestId);
-		httpExecute(entity);
+		return httpExecute(entity);
 	}
 
-	public void httpPost(String url, int requestId, String queryString,
-			RequestReceiver rr) {
-		httpPost(url, requestId, queryString, null, rr);
+	public RequestHolder httpPost(String url, int requestId,
+			String queryString, RequestReceiver rr) {
+		return httpPost(url, requestId, queryString, null, rr);
 	}
 
 	/**
@@ -161,21 +162,21 @@ public class ConnectionHelper {
 	 * @param charset
 	 * @param rr
 	 */
-	public void httpPost(String url, int requestId, String queryString,
-			String charset, RequestReceiver rr) {
+	public RequestHolder httpPost(String url, int requestId,
+			String queryString, String charset, RequestReceiver rr) {
 		RequestEntity entity = RequestEntity.obtain();
 		entity.setUrl(url);
 		entity.setRequestReceiver(rr);
 		entity.setPostEntitiy(queryString, charset);
 		entity.setMethod(RequestMethod.POST);
 		entity.setRequestId(requestId);
-		httpExecute(entity);
+		return httpExecute(entity);
 	}
 
-	public void httpPost(String url, int requestId,
+	public RequestHolder httpPost(String url, int requestId,
 			List<NameValuePair> postValues, Map<String, File> files,
 			RequestReceiver rr) {
-		httpPost(url, requestId, postValues, null, files, rr);
+		return httpPost(url, requestId, postValues, null, files, rr);
 	}
 
 	/**
@@ -187,7 +188,7 @@ public class ConnectionHelper {
 	 * @param files
 	 * @param rr
 	 */
-	public void httpPost(String url, int requestId,
+	public RequestHolder httpPost(String url, int requestId,
 			List<NameValuePair> postValues, String charset,
 			Map<String, File> files, RequestReceiver rr) {
 		RequestEntity entity = RequestEntity.obtain();
@@ -196,11 +197,84 @@ public class ConnectionHelper {
 		entity.setPostEntitiy(postValues, charset, files);
 		entity.setMethod(RequestMethod.POST_WITH_FILE);
 		entity.setRequestId(requestId);
-		httpExecute(entity);
+		return httpExecute(entity);
 	}
 
-	public void httpExecute(RequestEntity entity) {
-		executor.execute(obtainConnectionTask(entity));
+	private RequestHolder httpExecute(RequestEntity entity) {
+		ConnectionTask task = obtainConnectionTask(entity);
+		RequestHolder c = new RequestHolder(entity, task);
+		entity.setCanceler(c);
+		entity.setRequestTaskFuture(executor.submit(task));
+		// executor.execute(obtainConnectionTask(entity));
+		return c;
+	}
+
+	/**
+	 * 取消请求
+	 * 
+	 * @param canceler
+	 * @return
+	 */
+	private boolean cancleRequest(RequestHolder canceler) {
+		if (canceler == null) {
+			return true;
+		}
+		RequestEntity request = canceler.getRequestEntity();
+		if (request == null) {
+			return true;
+		}
+		synchronized (request) {
+			Future<?> future = request.getRequestTaskFuture();
+			if (future == null) {
+				return false;
+			}
+			if (request.isCanceled() && request.isCancelStateSend()) {
+				return true;
+			}
+			request.setCanceled(true);
+			//
+			try {
+				future.cancel(true);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return false;
+			}
+			tryNotifyCanceled(request);
+		}
+		return true;
+	}
+
+	public class RequestHolder {
+		private RequestEntity reqeustEntity;
+		private ConnectionTask connectionTask;
+
+		RequestHolder(RequestEntity rr, ConnectionTask task) {
+			reqeustEntity = rr;
+			connectionTask = task;
+		}
+
+		RequestEntity getRequestEntity() {
+			return reqeustEntity;
+		}
+
+		public boolean isCanceled() {
+			synchronized (reqeustEntity) {
+				return reqeustEntity == null || reqeustEntity.isCanceled();
+			}
+		}
+
+		public boolean cancelRequest() {
+			synchronized (connectionTask) {
+				connectionTask.isInterrupted = true;
+			}
+			synchronized (reqeustEntity) {
+				if (isCanceled()) {
+					return true;
+				} else {
+					return cancleRequest(this);
+				}
+			}
+		}
 	}
 
 	/**
@@ -208,6 +282,7 @@ public class ConnectionHelper {
 	 */
 	class ConnectionTask implements Runnable {
 		RequestEntity rEntity;
+		boolean isInterrupted = false;
 
 		public ConnectionTask(RequestEntity entity) {
 			rEntity = entity;
@@ -264,19 +339,45 @@ public class ConnectionHelper {
 			if (DEBUG) {
 				reportRequestEntity(rEntity, statusCode);
 			}
-			// 发送到主线程
-			rEntity.setResultCode(customResultCode);
-			Message msg = httpHandler.obtainMessage();
-			msg.obj = rEntity;
-			httpHandler.sendMessage(msg);
+			synchronized (this) {
+				if (!isInterrupted) {
+					synchronized (rEntity) {
+						if (rEntity.isCanceled()) {
+							tryNotifyCanceled(rEntity);
+						} else {
+							// 发送到主线程
+							rEntity.setResultCode(customResultCode);
+							Message msg = httpHandler.obtainMessage();
+							msg.obj = rEntity;
+							httpHandler.sendMessage(msg);
+						}
+					}
+				}
+			}
 			recycle();
 		}
 
 		public void recycle() {
 			rEntity = null;
+			isInterrupted = false;
 			if (connectionTaskList.size() < 6) {
 				connectionTaskList.add(this);
 			}
+		}
+	}
+
+	/**
+	 * 检查是否是cancle的状态，如果是则分发状态
+	 * 
+	 * @param re
+	 */
+	private void tryNotifyCanceled(RequestEntity re) {
+		if (re.isCanceled() && !re.isCancelStateSend()) {
+			re.setCancelStateSend(true);
+			// 发送到主线程
+			Message msg = httpHandler.obtainMessage();
+			msg.obj = re;
+			httpHandler.sendMessage(msg);
 		}
 	}
 
@@ -286,11 +387,18 @@ public class ConnectionHelper {
 			// 分发结果给UI Thread
 			if (msg.obj instanceof RequestEntity) {
 				RequestEntity entity = (RequestEntity) msg.obj;
-				if (entity.getRequestReceiver() != null) {
-					entity.getRequestReceiver().onResult(
-							entity.getResultCode(), entity.getRequestId(),
+				RequestReceiver rr = entity.getRequestReceiver();
+				if (entity.isCanceled()) {
+					if (rr instanceof RequestReceiverSupportCancel) {
+						RequestReceiverSupportCancel rrsc = (RequestReceiverSupportCancel) rr;
+						rrsc.onRequestCanceled(entity.getRequestId());
+					}
+				} else {
+					rr.onResult(entity.getResultCode(), entity.getRequestId(),
 							entity.getRawResponse());
 				}
+				//
+				entity.getCanceler().reqeustEntity = null;
 				entity.recycle();
 			}
 		}
@@ -340,6 +448,16 @@ public class ConnectionHelper {
 		public static final int RESULT_STATE_TIME_OUT = 10408;
 
 		public void onResult(int resultCode, int requestId, String rawResponses);
+	}
+
+	/**
+	 * 支持接收cancel
+	 * 
+	 * @author kaige
+	 * 
+	 */
+	public interface RequestReceiverSupportCancel extends RequestReceiver {
+		public void onRequestCanceled(int requestId);
 	}
 
 	// public interface HttpTask extends Runnable {
