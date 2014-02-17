@@ -9,6 +9,7 @@ import com.phodev.andtools.R;
 import com.phodev.andtools.common.SimpleDesc;
 import com.phodev.andtools.conn.ConnectionHelper;
 import com.phodev.andtools.conn.ConnectionHelper.RequestReceiver;
+import com.phodev.andtools.conn.ConnectionHelper.RequestReceiverSupportCancel;
 import com.phodev.andtools.samples.inner.InnerFragment;
 
 /**
@@ -51,9 +52,13 @@ public class HttpConnectionFragment extends InnerFragment implements
 		String url = urlBox.getText().toString();
 		ConnectionHelper conn = ConnectionHelper.obtainInstance();
 		conn.httpGet(url, 0, rr);
+		// support cancel
+		// RequestHolder holder = conn.httpGet(url, 0, rr);
+		// holder.cancelRequest();
+
 	}
 
-	private RequestReceiver rr = new RequestReceiver() {
+	private RequestReceiver rr = new RequestReceiverSupportCancel() {
 
 		@Override
 		public void onResult(int resultCode, int requestId, String rawResponses) {
@@ -63,6 +68,12 @@ public class HttpConnectionFragment extends InnerFragment implements
 				resultTv.setText("error");
 			}
 		}
+
+		@Override
+		public void onRequestCanceled(int requestId) {
+			resultTv.setText("onRequestCanceled");
+		}
+
 	};
 
 }
