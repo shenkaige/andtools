@@ -19,6 +19,7 @@ import com.phodev.andtools.samples.ChartViewFragment;
 import com.phodev.andtools.samples.DonwloadFragment;
 import com.phodev.andtools.samples.HttpConnectionFragment;
 import com.phodev.andtools.samples.ImageMarqueeFragment;
+import com.phodev.andtools.samples.MosaicFragment;
 import com.phodev.andtools.samples.QuickReturnFragment;
 import com.phodev.andtools.samples.RightSlidingMenuFragment;
 import com.phodev.andtools.samples.RoundDiscFragment;
@@ -43,6 +44,7 @@ public class MainActivity extends Activity {
 		data.add(ImageMarqueeFragment.class);
 		data.add(DonwloadFragment.class);
 		data.add(WebPageDriverFragment.class);
+		data.add(MosaicFragment.class);
 	}
 
 	@Override
