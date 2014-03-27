@@ -76,7 +76,6 @@ public class MosaicProcessor {
 	 */
 	private static void dimBlock(int[] pxs, int startX, int startY,
 			int blockSize, int maxX, int maxY) {
-		// 临时实现，没找到合适的放大算法
 		int stopX = startX + blockSize - 1;
 		int stopY = startY + blockSize - 1;
 		if (stopX > maxX) {
