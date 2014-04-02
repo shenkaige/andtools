@@ -48,7 +48,8 @@ public class DottedLineView extends View {
 		paint.setColor(mLineColor);
 		path = new Path();
 		paint.setStrokeWidth(mLineStrokeWidth);
-		PathEffect effects = new DashPathEffect(new float[] { 4, 2 }, 1);
+		int interval = (int)(getResources().getDisplayMetrics().density*2f);
+		PathEffect effects = new DashPathEffect(new float[] { interval, interval }, 1);
 		paint.setPathEffect(effects);
 	}
 
