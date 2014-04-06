@@ -11,20 +11,19 @@ import android.graphics.Rect;
  * 
  */
 public class MosaicProcessor {
-
 	public static final int min_mosaic_block_size = 4;
 
 	private MosaicProcessor() {
 	}
 
 	/**
+	 * 添加马赛克
 	 * 
 	 * @param bitmap
 	 * @param targetRect
 	 * @param blockSize
-	 *            {@link #min_mosaic_block_size}
 	 * @return
-	 * @throws Exception
+	 * @throws OutOfMemoryError
 	 */
 	public static Bitmap makeMosaic(Bitmap bitmap, Rect targetRect,
 			int blockSize) throws OutOfMemoryError {
@@ -52,13 +51,11 @@ public class MosaicProcessor {
 		//
 		int rowCount = (int) Math.ceil((float) rectH / blockSize);
 		int columnCount = (int) Math.ceil((float) rectW / blockSize);
-		int maxX = bw;
-		int maxY = bh;
 		for (int r = 0; r < rowCount; r++) { // row loop
 			for (int c = 0; c < columnCount; c++) {// column loop
-				int startX = targetRect.left + c * blockSize + 1;
-				int startY = targetRect.top + r * blockSize + 1;
-				dimBlock(bitmapPxs, startX, startY, blockSize, maxX, maxY);
+				int startX = targetRect.left + c * blockSize;
+				int startY = targetRect.top + r * blockSize;
+				dimBlock(bitmapPxs, startX, startY, blockSize, bw, bh);
 			}
 		}
 		return Bitmap.createBitmap(bitmapPxs, bw, bh, Config.ARGB_8888);
@@ -71,13 +68,15 @@ public class MosaicProcessor {
 	 * @param startX
 	 * @param startY
 	 * @param blockSize
-	 * @param maxX
-	 * @param maxY
+	 * @param width
+	 * @param height
 	 */
 	private static void dimBlock(int[] pxs, int startX, int startY,
-			int blockSize, int maxX, int maxY) {
-		int stopX = startX + blockSize - 1;
-		int stopY = startY + blockSize - 1;
+			int blockSize, int width, int height) {
+		int stopX = startX + blockSize;
+		int stopY = startY + blockSize;
+		int maxX = width - 1;
+		int maxY = height - 1;
 		if (stopX > maxX) {
 			stopX = maxX;
 		}
@@ -94,15 +93,13 @@ public class MosaicProcessor {
 		if (sampleColorY > maxY) {
 			sampleColorY = maxY;
 		}
-		int colorLinePosition = (sampleColorY - 1) * maxX;
-		int sampleColor = pxs[colorLinePosition + sampleColorX - 1];// 像素从1开始，但是数组层0开始
+		int colorLinePosition = sampleColorY * width;
+		int sampleColor = pxs[colorLinePosition + sampleColorX];
 		for (int y = startY; y <= stopY; y++) {
-			int p = (y - 1) * maxX;
+			int p = y * width;
 			for (int x = startX; x <= stopX; x++) {
-				// 像素从1开始，但是数组层0开始
-				pxs[p + x - 1] = sampleColor;
+				pxs[p + x] = sampleColor;
 			}
 		}
 	}
-
 }
