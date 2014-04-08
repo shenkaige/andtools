@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import com.phodev.andtools.adapter.InnerBaseAdapter;
 import com.phodev.andtools.common.SimpleDesc;
+import com.phodev.andtools.samples.AqueryFragment;
 import com.phodev.andtools.samples.ChartViewFragment;
 import com.phodev.andtools.samples.DonwloadFragment;
 import com.phodev.andtools.samples.HttpConnectionFragment;
@@ -45,6 +46,7 @@ public class MainActivity extends Activity {
 		data.add(DonwloadFragment.class);
 		data.add(WebPageDriverFragment.class);
 		data.add(MosaicFragment.class);
+		data.add(AqueryFragment.class);
 	}
 
 	@Override
