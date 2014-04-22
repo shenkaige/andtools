@@ -56,6 +56,9 @@ public class RoundImageView extends ImageView {
 		int w = getWidth();
 		int h = getHeight();
 		roundRect.set(0, 0, w, h);
+		//roundRect.set(0, 0, w, h + rect_adius);//仅上边圆角
+		//roundRect.set(0, rect_adius, w, h);    //仅下边圆角
+		//roundRect.set(0, 0, w+ rect_adius, h+ rect_adius);//仅左上角是圆角
 	}
 
 	@Override
