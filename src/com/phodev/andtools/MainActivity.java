@@ -26,6 +26,7 @@ import com.phodev.andtools.samples.RightSlidingMenuFragment;
 import com.phodev.andtools.samples.RoundDiscFragment;
 import com.phodev.andtools.samples.VerticleMarqueeTextFragment;
 import com.phodev.andtools.samples.WebPageDriverFragment;
+import com.phodev.andtools.samples.WifiAnalyseFragment;
 import com.phodev.andtools.samples.inner.InnerFragment;
 
 public class MainActivity extends Activity {
@@ -36,6 +37,7 @@ public class MainActivity extends Activity {
 		adapter = new FragmentAdapter();
 		adapter.setData(data, false);
 		//
+		data.add(WifiAnalyseFragment.class);
 		data.add(QuickReturnFragment.class);
 		data.add(ChartViewFragment.class);
 		data.add(HttpConnectionFragment.class);
