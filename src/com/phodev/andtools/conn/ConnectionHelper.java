@@ -1,6 +1,7 @@
 package com.phodev.andtools.conn;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -42,7 +43,7 @@ import android.util.Log;
 /**
  * 网络请求数据封装
  * 
- * @author skg
+ * @author sky
  * 
  */
 public class ConnectionHelper {
@@ -113,7 +114,7 @@ public class ConnectionHelper {
 	 *            在onFinish的会返回requestId，标示是哪个一个请求
 	 * @param rr
 	 */
-	public RequestHolder httpGet(String url, int requestId, RequestReceiver rr) {
+	public long httpGet(String url, int requestId, RequestReceiver rr) {
 		RequestEntity entity = RequestEntity.obtain();
 		entity.setUrl(url);
 		entity.setRequestReceiver(rr);
@@ -122,7 +123,7 @@ public class ConnectionHelper {
 		return httpExecute(entity);
 	}
 
-	public RequestHolder httpPost(String url, int requestId,
+	public long httpPost(String url, int requestId,
 			List<NameValuePair> postValues, RequestReceiver rr) {
 		String n = null;
 		return httpPost(url, requestId, postValues, n, rr);
@@ -137,7 +138,7 @@ public class ConnectionHelper {
 	 * @param charset
 	 * @param rr
 	 */
-	public RequestHolder httpPost(String url, int requestId,
+	public long httpPost(String url, int requestId,
 			List<NameValuePair> postValues, String charset, RequestReceiver rr) {
 		RequestEntity entity = RequestEntity.obtain();
 		entity.setUrl(url);
@@ -148,8 +149,8 @@ public class ConnectionHelper {
 		return httpExecute(entity);
 	}
 
-	public RequestHolder httpPost(String url, int requestId,
-			String queryString, RequestReceiver rr) {
+	public long httpPost(String url, int requestId, String queryString,
+			RequestReceiver rr) {
 		return httpPost(url, requestId, queryString, null, rr);
 	}
 
@@ -162,8 +163,8 @@ public class ConnectionHelper {
 	 * @param charset
 	 * @param rr
 	 */
-	public RequestHolder httpPost(String url, int requestId,
-			String queryString, String charset, RequestReceiver rr) {
+	public long httpPost(String url, int requestId, String queryString,
+			String charset, RequestReceiver rr) {
 		RequestEntity entity = RequestEntity.obtain();
 		entity.setUrl(url);
 		entity.setRequestReceiver(rr);
@@ -173,7 +174,7 @@ public class ConnectionHelper {
 		return httpExecute(entity);
 	}
 
-	public RequestHolder httpPost(String url, int requestId,
+	public long httpPost(String url, int requestId,
 			List<NameValuePair> postValues, Map<String, File> files,
 			RequestReceiver rr) {
 		return httpPost(url, requestId, postValues, null, files, rr);
@@ -188,7 +189,7 @@ public class ConnectionHelper {
 	 * @param files
 	 * @param rr
 	 */
-	public RequestHolder httpPost(String url, int requestId,
+	public long httpPost(String url, int requestId,
 			List<NameValuePair> postValues, String charset,
 			Map<String, File> files, RequestReceiver rr) {
 		RequestEntity entity = RequestEntity.obtain();
@@ -200,81 +201,85 @@ public class ConnectionHelper {
 		return httpExecute(entity);
 	}
 
-	private RequestHolder httpExecute(RequestEntity entity) {
+	private Map<Long, RequestEntity> mRequestRecords = new HashMap<Long, RequestEntity>();
+
+	private long httpExecute(RequestEntity entity) {
 		ConnectionTask task = obtainConnectionTask(entity);
-		RequestHolder c = new RequestHolder(entity, task);
-		entity.setCanceler(c);
 		entity.setRequestTaskFuture(executor.submit(task));
+		synchronized (mRequestRecords) {
+			mRequestRecords.put(entity.getRequestHandler(), entity);
+		}
 		// executor.execute(obtainConnectionTask(entity));
-		return c;
+		return entity.getRequestHandler();
+	}
+
+	/**
+	 * 判断是否在运行
+	 * 
+	 * @param reqFingerprint
+	 * @return
+	 */
+	public boolean isReqeustRunning(long reqFingerprint) {
+		synchronized (mRequestRecords) {
+			RequestEntity re = mRequestRecords.get(reqFingerprint);
+			if (re == null) {
+				return false;
+			}
+			return !re.isCanceled();
+		}
+	}
+
+	public class RequestEntityNotFoundException extends RuntimeException {
+		private static final long serialVersionUID = 3742290111879087686L;
+		private long reqFingerprint;
+
+		public RequestEntityNotFoundException(long reqFingerprint) {
+			this.reqFingerprint = reqFingerprint;
+		}
+
+		@Override
+		public String toString() {
+			return "RequestEntityNotFoundException reqFingerprint="
+					+ reqFingerprint + " reqeust entity not found";
+		}
+
 	}
 
 	/**
 	 * 取消请求
 	 * 
-	 * @param canceler
+	 * @param reqFingerprint
 	 * @return
 	 */
-	private boolean cancleRequest(RequestHolder canceler) {
-		if (canceler == null) {
-			return true;
-		}
-		RequestEntity request = canceler.getRequestEntity();
-		if (request == null) {
-			return true;
-		}
-		synchronized (request) {
-			Future<?> future = request.getRequestTaskFuture();
-			if (future == null) {
-				return false;
+	public boolean cancleRequest(long reqFingerprint)
+			throws RequestEntityNotFoundException {
+		RequestEntity request = null;
+		synchronized (mRequestRecords) {
+			request = mRequestRecords.get(reqFingerprint);
+			if (request == null) {
+				throw new RequestEntityNotFoundException(reqFingerprint);
 			}
-			if (request.isCanceled() && request.isCancelStateSend()) {
-				return true;
-			}
-			request.setCanceled(true);
 			//
-			try {
-				future.cancel(true);
-			} catch (Exception e) {
-				e.printStackTrace();
-				return false;
+			synchronized (request) {
+				if (request.isCanceled() && request.isCancelStateSend()) {
+					return true;
+				}
+				Future<?> future = request.getRequestTaskFuture();
+				if (future == null) {
+					return true;
+				}
+				request.setCanceled(true);
+				//
+				try {
+					future.cancel(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+					return isReqeustRunning(reqFingerprint);
+				}
+				tryNotifyCanceled(request);
 			}
-			tryNotifyCanceled(request);
 		}
 		return true;
-	}
-
-	public class RequestHolder {
-		private RequestEntity reqeustEntity;
-		private ConnectionTask connectionTask;
-
-		RequestHolder(RequestEntity rr, ConnectionTask task) {
-			reqeustEntity = rr;
-			connectionTask = task;
-		}
-
-		RequestEntity getRequestEntity() {
-			return reqeustEntity;
-		}
-
-		public boolean isCanceled() {
-			synchronized (reqeustEntity) {
-				return reqeustEntity == null || reqeustEntity.isCanceled();
-			}
-		}
-
-		public boolean cancelRequest() {
-			synchronized (connectionTask) {
-				connectionTask.isInterrupted = true;
-			}
-			synchronized (reqeustEntity) {
-				if (isCanceled()) {
-					return true;
-				} else {
-					return cancleRequest(this);
-				}
-			}
-		}
 	}
 
 	/**
@@ -386,20 +391,16 @@ public class ConnectionHelper {
 		public void handleMessage(Message msg) {
 			// 分发结果给UI Thread
 			if (msg.obj instanceof RequestEntity) {
-				RequestEntity entity = (RequestEntity) msg.obj;
-				RequestReceiver rr = entity.getRequestReceiver();
-				if (entity.isCanceled()) {
-					if (rr instanceof RequestReceiverSupportCancel) {
-						RequestReceiverSupportCancel rrsc = (RequestReceiverSupportCancel) rr;
-						rrsc.onRequestCanceled(entity.getRequestId());
-					}
+				RequestEntity e = (RequestEntity) msg.obj;
+				RequestReceiver rr = e.getRequestReceiver();
+				if (e.isCanceled()) {
+					rr.onRequestCanceled(e.getRequestId(), e.getTag());
 				} else {
-					rr.onResult(entity.getResultCode(), entity.getRequestId(),
-							entity.getRawResponse());
+					rr.onResult(e.getResultCode(), e.getRequestId(),
+							e.getTag(), e.getRawResponse());
 				}
 				//
-				entity.getCanceler().reqeustEntity = null;
-				entity.recycle();
+				e.recycle();
 			}
 		}
 	};
@@ -447,17 +448,17 @@ public class ConnectionHelper {
 		public static final int RESULT_STATE_ERROR = 10500;
 		public static final int RESULT_STATE_TIME_OUT = 10408;
 
-		public void onResult(int resultCode, int requestId, String rawResponses);
+		public void onResult(int resultCode, int reqId, Object tag, String resp);
+
+		public void onRequestCanceled(int reqId, Object tag);
 	}
 
-	/**
-	 * 支持接收cancel
-	 * 
-	 * @author kaige
-	 * 
-	 */
-	public interface RequestReceiverSupportCancel extends RequestReceiver {
-		public void onRequestCanceled(int requestId);
+	public abstract static class SimpleReqeustReceiver implements
+			RequestReceiver {
+		@Override
+		public void onRequestCanceled(int reqId, Object tag) {
+
+		}
 	}
 
 	// public interface HttpTask extends Runnable {

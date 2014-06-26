@@ -19,14 +19,13 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 
-import com.phodev.andtools.conn.ConnectionHelper.RequestHolder;
 import com.phodev.andtools.conn.ConnectionHelper.RequestMethod;
 import com.phodev.andtools.conn.ConnectionHelper.RequestReceiver;
 
 /**
  * 请求实例
  * 
- * @author skg
+ * @author sky
  * 
  */
 public class RequestEntity {
@@ -39,7 +38,6 @@ public class RequestEntity {
 	private int requestId;
 	private String defCharset;
 	private Object mTag;
-	private RequestHolder canceler;
 
 	private RequestEntity() {
 
@@ -215,13 +213,15 @@ public class RequestEntity {
 
 	private boolean isCanceled = false;
 	private boolean isCancelStateSend = false;
+	private long requestHandler = makeNextRequestIndex();
 
-	protected RequestHolder getCanceler() {
-		return canceler;
-	}
-
-	protected void setCanceler(RequestHolder canceler) {
-		this.canceler = canceler;
+	/**
+	 * 获取请求句柄
+	 * 
+	 * @return
+	 */
+	public long getRequestHandler() {
+		return requestHandler;
 	}
 
 	protected boolean isCancelStateSend() {
@@ -236,7 +236,7 @@ public class RequestEntity {
 		this.isCanceled = canceled;
 	}
 
-	public boolean isCanceled() {
+	protected boolean isCanceled() {
 		return isCanceled;
 	}
 
@@ -260,7 +260,25 @@ public class RequestEntity {
 		}
 	}
 
-	public void recycle() {
+	private static long last_reqeust_index;
+
+	/**
+	 * 生成下一个ReqeustEntitiy对应的id
+	 * 
+	 * @return
+	 */
+	private static long makeNextRequestIndex() {
+		synchronized (RequestEntity.class) {
+			long id = System.currentTimeMillis();
+			if (id == last_reqeust_index) {
+				id++;
+			}
+			last_reqeust_index = id;
+			return last_reqeust_index;
+		}
+	}
+
+	public synchronized void recycle() {
 		url = null;
 		postEntity = null;
 		requestReceiver = null;
@@ -270,8 +288,8 @@ public class RequestEntity {
 		defCharset = null;
 		isCanceled = false;
 		isCancelStateSend = false;
+		requestHandler = makeNextRequestIndex();
 		setRequestTaskFuture(null);
-		canceler = null;
 		if (recyleList.size() < 6) {
 			recyleList.add(this);
 		}
