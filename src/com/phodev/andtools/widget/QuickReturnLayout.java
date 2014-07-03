@@ -11,11 +11,12 @@ import com.phodev.andtools.R;
 /**
  * 可以排挤的Title View
  * 
- * @author kaige
+ * @author sky
  * 
  */
 public class QuickReturnLayout extends ViewGroup {
-	public static final int id_content = R.id.quick_return_content;
+	public static final int def_content_id = R.id.quick_return_content;
+	private int id_content = def_content_id;
 
 	public QuickReturnLayout(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -25,6 +26,15 @@ public class QuickReturnLayout extends ViewGroup {
 	public QuickReturnLayout(Context context) {
 		super(context);
 		init();
+	}
+
+	/**
+	 * 设置内容的id
+	 * 
+	 * @param contentId
+	 */
+	public void setContentId(int contentId) {
+		this.id_content = contentId;
 	}
 
 	private void init() {
@@ -46,7 +56,7 @@ public class QuickReturnLayout extends ViewGroup {
 			return;
 		}
 		int w = r - l;
-		int h = b - t;
+		// int h = b - t;
 		int cl = 0;
 		int ct = 0;
 		int cr = w;
@@ -57,7 +67,13 @@ public class QuickReturnLayout extends ViewGroup {
 			titleShowableHeight = 0;
 		}
 		//
+		int cLeftMargin = 0;
+		int cTopMargin = 0;
+		int cRightMargin = 0;
+		int cBottomMargin = 0;
+		//
 		int topOffset = 0;
+		MarginLayoutParams tempCMarginLp;
 		for (int i = 0; i < childCount; i++) {
 			View c = getChildAt(i);
 			if (c.getVisibility() == View.GONE) {
@@ -67,24 +83,33 @@ public class QuickReturnLayout extends ViewGroup {
 				contentView = c;
 				continue;
 			}
-			ct = topOffset;
-			cb = ct + c.getMeasuredHeight();
-			topOffset = cb;
-			if (cb > titleShowableHeight) {
-				ct -= cb - titleShowableHeight;
-				cb = titleShowableHeight;
-				c.layout(cl, ct, cr, cb);
-			} else {
-				c.layout(cl, ct, cr, cb);
-			}
+			tempCMarginLp = (MarginLayoutParams) c.getLayoutParams();
+			cLeftMargin = tempCMarginLp.leftMargin;
+			cTopMargin = tempCMarginLp.topMargin;
+			cRightMargin = tempCMarginLp.rightMargin;
+			cBottomMargin = tempCMarginLp.bottomMargin;
 			//
-			topOffset = cb;
+			ct = topOffset + cTopMargin;
+			cb = ct + c.getMeasuredHeight();
+			if (cb + cBottomMargin > titleShowableHeight) {
+				ct -= cb + cBottomMargin - titleShowableHeight;
+				cb = titleShowableHeight - cBottomMargin;
+			}
+			c.layout(cl + cLeftMargin, ct, cr - cRightMargin, cb);
+			//
+			topOffset = cb + cBottomMargin;
 		}
 		// layout content view
 		if (contentView != null) {
-			ct = topOffset;
-			cb = h;
-			contentView.layout(cl, ct, cr, cb);
+			tempCMarginLp = (MarginLayoutParams) contentView.getLayoutParams();
+			cLeftMargin = tempCMarginLp.leftMargin;
+			cTopMargin = tempCMarginLp.topMargin;
+			cRightMargin = tempCMarginLp.rightMargin;
+			cBottomMargin = tempCMarginLp.bottomMargin;
+			//
+			ct = topOffset + cTopMargin;
+			cb = ct + contentView.getMeasuredHeight();
+			contentView.layout(cl + cLeftMargin, ct, cr - cRightMargin, cb);
 		}
 	}
 
@@ -102,6 +127,7 @@ public class QuickReturnLayout extends ViewGroup {
 		int childCount = getChildCount();
 		int tph = 0;
 		View contentView = null;
+		MarginLayoutParams lp = null;
 		for (int i = 0; i < childCount; i++) {
 			View child = getChildAt(i);
 			if (child.getVisibility() == View.GONE) {
@@ -111,15 +137,21 @@ public class QuickReturnLayout extends ViewGroup {
 				contentView = child;
 				continue;
 			}
-			measureChild(child, widthMeasureSpec, heightMeasureSpec);
+			measureChildWithMargins(child, widthMeasureSpec, 0,
+					heightMeasureSpec, tph);
+			lp = (MarginLayoutParams) child.getLayoutParams();
+			tph += lp.topMargin;
 			tph += child.getMeasuredHeight();
+			tph += lp.bottomMargin;
 		}
 		titlePartHeight = tph;
 		if (contentView != null) {
-			contentView
-					.measure(MeasureSpec.makeMeasureSpec(maxWidth,
-							MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(
-							maxHeight, MeasureSpec.EXACTLY));
+			measureChildWithMargins(
+					contentView,
+					MeasureSpec.makeMeasureSpec(maxWidth, MeasureSpec.EXACTLY),
+					0,
+					MeasureSpec.makeMeasureSpec(maxHeight, MeasureSpec.EXACTLY),
+					0);
 		}
 	}
 
@@ -170,7 +202,7 @@ public class QuickReturnLayout extends ViewGroup {
 	}
 
 	private boolean checkDoFollow(float lastActionY, float curActionY) {
-		if (Math.abs(lastActionY - curActionY) > 1) {
+		if (Math.abs(lastActionY - curActionY) > 0.1f) {
 			doFollow(lastActionY, curActionY);
 			return true;
 		} else {
@@ -197,5 +229,10 @@ public class QuickReturnLayout extends ViewGroup {
 		titlePartHideHeight += (int) (lastMoveY - currentMoveY);
 		forceLayout();
 		requestLayout();
+	}
+
+	@Override
+	public LayoutParams generateLayoutParams(AttributeSet attrs) {
+		return new MarginLayoutParams(getContext(), attrs);
 	}
 }
