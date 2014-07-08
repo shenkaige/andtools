@@ -9,7 +9,6 @@ import com.phodev.andtools.R;
 import com.phodev.andtools.common.SimpleDesc;
 import com.phodev.andtools.conn.ConnectionHelper;
 import com.phodev.andtools.conn.ConnectionHelper.RequestReceiver;
-import com.phodev.andtools.conn.ConnectionHelper.RequestReceiverSupportCancel;
 import com.phodev.andtools.samples.inner.InnerFragment;
 
 /**
@@ -51,29 +50,26 @@ public class HttpConnectionFragment extends InnerFragment implements
 		resultTv.setText("loading...");
 		String url = urlBox.getText().toString();
 		ConnectionHelper conn = ConnectionHelper.obtainInstance();
-		conn.httpGet(url, 0, rr);
+		long requstHandler = conn.httpGet(url, 0, rr);
 		// support cancel
-		// RequestHolder holder = conn.httpGet(url, 0, rr);
-		// holder.cancelRequest();
-
+		// conn.cancleRequest(requstHandler);
 	}
 
-	private RequestReceiver rr = new RequestReceiverSupportCancel() {
+	private RequestReceiver rr = new RequestReceiver() {
 
 		@Override
-		public void onResult(int resultCode, int requestId, String rawResponses) {
+		public void onResult(int resultCode, int reqId, Object tag, String resp) {
 			if (resultCode == RESULT_STATE_OK) {
-				resultTv.setText(rawResponses);
+				resultTv.setText(resp);
 			} else {
 				resultTv.setText("error");
 			}
 		}
 
 		@Override
-		public void onRequestCanceled(int requestId) {
+		public void onRequestCanceled(int reqId, Object tag) {
 			resultTv.setText("onRequestCanceled");
 		}
-
 	};
 
 }
