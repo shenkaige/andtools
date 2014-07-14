@@ -300,7 +300,7 @@ public class ConnectionHelper {
 		@Override
 		public void run() {
 			HttpRequestBase httpRequest = null;
-			int customResultCode = RequestReceiver.RESULT_STATE_ERROR;
+			int customResultCode = RequestReceiver.RESULT_STATE_NETWORK_ERROR;
 			int statusCode = -1;
 			try {
 				if (rEntity.getMethod() == RequestMethod.GET) {
@@ -322,17 +322,17 @@ public class ConnectionHelper {
 							response.getEntity(), rEntity.getDefaultCharset()));
 					customResultCode = RequestReceiver.RESULT_STATE_OK;
 				} else {
-					customResultCode = RequestReceiver.RESULT_STATE_ERROR;
+					customResultCode = RequestReceiver.RESULT_STATE_SERVER_ERROR;
 				}
 			} catch (ConnectTimeoutException e) {
 				e.printStackTrace();
 				customResultCode = RequestReceiver.RESULT_STATE_TIME_OUT;
 			} catch (ClientProtocolException e) {
 				e.printStackTrace();
-				customResultCode = RequestReceiver.RESULT_STATE_ERROR;
+				customResultCode = RequestReceiver.RESULT_STATE_NETWORK_ERROR;
 			} catch (Exception e) {
 				e.printStackTrace();
-				customResultCode = RequestReceiver.RESULT_STATE_ERROR;
+				customResultCode = RequestReceiver.RESULT_STATE_NETWORK_ERROR;
 			} finally {
 				try {
 					httpRequest.abort();
@@ -444,9 +444,10 @@ public class ConnectionHelper {
 	}
 
 	public interface RequestReceiver {
-		public static final int RESULT_STATE_OK = 10200;
-		public static final int RESULT_STATE_ERROR = 10500;
-		public static final int RESULT_STATE_TIME_OUT = 10408;
+		public static final int RESULT_STATE_OK = 200;
+		public static final int RESULT_STATE_SERVER_ERROR = 500;
+		public static final int RESULT_STATE_NETWORK_ERROR = -1;
+		public static final int RESULT_STATE_TIME_OUT = 408;
 
 		public void onResult(int resultCode, int reqId, Object tag, String resp);
 
