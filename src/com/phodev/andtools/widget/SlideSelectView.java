@@ -5,16 +5,12 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.widget.TextView;
 
 /**
  * 选择类别的view
- * 
- * <pre>
- * </pre>
  * 
  * @author sky
  *
@@ -24,22 +20,6 @@ public class SlideSelectView extends TextView {
 
 	public SlideSelectView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		setSlideSelectListener(new SlideSelectListener() {
-			int lastIndex;
-
-			@Override
-			public void onSlideSelectedChanged(String content, int index) {
-				if (lastIndex != index) {
-					Log.e("ttt", "selected content:" + content);
-				}
-				lastIndex = index;
-			}
-
-			@Override
-			public void onSlideSelectStateChanged(boolean isSelecting) {
-
-			}
-		});
 	}
 
 	public SlideSelectView(Context context) {
