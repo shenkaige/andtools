@@ -24,6 +24,7 @@ import com.phodev.andtools.samples.MosaicFragment;
 import com.phodev.andtools.samples.QuickReturnFragment;
 import com.phodev.andtools.samples.RightSlidingMenuFragment;
 import com.phodev.andtools.samples.RoundDiscFragment;
+import com.phodev.andtools.samples.SlideSelectViewFragment;
 import com.phodev.andtools.samples.VerticleMarqueeTextFragment;
 import com.phodev.andtools.samples.WebPageDriverFragment;
 import com.phodev.andtools.samples.WifiAnalyseFragment;
@@ -49,6 +50,7 @@ public class MainActivity extends Activity {
 		data.add(WebPageDriverFragment.class);
 		data.add(MosaicFragment.class);
 		data.add(AqueryFragment.class);
+		data.add(SlideSelectViewFragment.class);
 	}
 
 	@Override
