@@ -1,6 +1,7 @@
 package com.phodev.andtools.widget;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -9,6 +10,8 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.widget.ImageView;
+
+import com.phodev.andtools.R;
 
 /**
  * 圆角ImageView
@@ -20,6 +23,11 @@ public class RoundImageView extends ImageView {
 
 	public RoundImageView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		TypedArray array = context.getResources().obtainAttributes(attrs,
+				R.styleable.RoundCornerView);
+		rect_adius = array.getDimension(
+				R.styleable.RoundCornerView_round_view_radius, rect_adius);
+		array.recycle();
 		init();
 	}
 
@@ -56,13 +64,16 @@ public class RoundImageView extends ImageView {
 		int w = getWidth();
 		int h = getHeight();
 		roundRect.set(0, 0, w, h);
-		//roundRect.set(0, 0, w, h + rect_adius);//仅上边圆角
-		//roundRect.set(0, rect_adius, w, h);    //仅下边圆角
-		//roundRect.set(0, 0, w+ rect_adius, h+ rect_adius);//仅左上角是圆角
+		// roundRect.set(0, 0, w, h + rect_adius);//仅上边圆角
+		// roundRect.set(0, rect_adius, w, h); //仅下边圆角
+		// roundRect.set(0, 0, w+ rect_adius, h+ rect_adius);//仅左上角是圆角
 	}
 
 	@Override
 	public void draw(Canvas canvas) {
+		if (rect_adius <= 0) {
+			rect_adius = getWidth();
+		}
 		canvas.saveLayer(roundRect, zonePaint, Canvas.ALL_SAVE_FLAG);
 		canvas.drawRoundRect(roundRect, rect_adius, rect_adius, zonePaint);
 		//
