@@ -21,5 +21,8 @@
         <attr name="selectedDot" format="reference|color" />
         <attr name="dotSpace" format="dimension" />
     </declare-styleable>
+    <declare-styleable name="RoundCornerView">
+        <attr name="round_view_radius" format="dimension" />
+    </declare-styleable>
 
 </resources>
