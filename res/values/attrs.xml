@@ -22,7 +22,9 @@
         <attr name="dotSpace" format="dimension" />
     </declare-styleable>
     <declare-styleable name="RoundCornerView">
-        <attr name="round_view_radius" format="dimension" />
+        <attr name="round_view_radius" format="dimension">
+            <flag name="abs_round" value="-1" />
+        </attr>
     </declare-styleable>
 
 </resources>
