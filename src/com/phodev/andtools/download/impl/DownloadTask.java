@@ -101,18 +101,35 @@ public class DownloadTask {
 			// Block下载失败,判断原因看是否需要开启线程继续下载
 			// 1,如果是网络部可用，则停止全部下载,并通知外部监听
 			// 2,如果是连接超时则尝试重新加载
+			if (currentRunner != null) {
+				currentRunner.innerStopAllLoader();
+			}
+			int e = TaskListener.TASK_ERROR_UNKOWN;
 			switch (errorCode) {
-			case ERROR_CAN_NOT_FIND_OUT_FILE:
-				// 可能是sdcard不存在，或者是
+			case ERROR_INVALID_BALOCK:
 				break;
+			case ERROR_NET_WORK_BAK:
+				e = TaskListener.TASK_ERROR_BAD_NETWORK;
+				break;
+			case ERROR_INVALID_URI:
+				break;
+			case ERROR_CAN_NOT_FIND_OUT_FILE:
+				break;
+			case ERROR_SDCARD_IS_REMOVED:
+				break;
+			case ERROR_UNKONW_IO_EXCEPTION:
 			default:
 				break;
 			}
+			onDownloadError(e);
 		}
 
 		@Override
 		public void onUnkonwIOException(BlockDownloader loader, IOException ex) {
-
+			if (currentRunner != null) {
+				currentRunner.innerStopAllLoader();
+			}
+			onDownloadError(TaskListener.TASK_ERROR_UNKOWN);
 		}
 
 	};
@@ -367,10 +384,12 @@ public class DownloadTask {
 	}
 
 	public interface TaskListener {
-		/** 无效的URL */
+		/** 无效的URL*/
 		public static final int TASK_ERROR_MALFORMED_URL = 0;
 		public static final int TASK_ERROR_INIT_BLOCKS_FAILED = 1;
 		public static final int TASK_ERROR_THREAD_POOL_SHUTDOWN = 2;
+		public static final int TASK_ERROR_BAD_NETWORK = 3;
+		public static final int TASK_ERROR_UNKOWN = 4;
 
 		public void onProgrees(DownloadFile file, long loadedSize, int speed);
 
