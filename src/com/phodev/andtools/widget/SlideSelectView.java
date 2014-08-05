@@ -1,6 +1,7 @@
 package com.phodev.andtools.widget;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
@@ -8,6 +9,8 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.widget.TextView;
+
+import com.phodev.andtools.R;
 
 /**
  * 选择类别的view
@@ -17,13 +20,31 @@ import android.widget.TextView;
  */
 public class SlideSelectView extends TextView {
 	private float lineSpace;
+	private float minLineInterval = 1f;
 
 	public SlideSelectView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		TypedArray array = context.getResources().obtainAttributes(attrs,
+				R.styleable.SlideSelectView);
+		minLineInterval = array.getDimension(
+				R.styleable.SlideSelectView_min_line_interval, 1f);
+		array.recycle();
 	}
 
 	public SlideSelectView(Context context) {
 		super(context);
+	}
+
+	/**
+	 * 设置行最小间距
+	 * 
+	 * @param interval
+	 *            px
+	 */
+	public void setMinLineInterval(float interval) {
+		this.minLineInterval = interval;
+		forceLayout();
+		invalidate();
 	}
 
 	@Override
@@ -35,12 +56,20 @@ public class SlideSelectView extends TextView {
 			float sizeW = getWidth() - getPaddingLeft() - getPaddingRight();
 			float validH = getHeight() - getPaddingTop() - getPaddingBottom();
 			float sizeH = (float) validH / (float) lineCount;
-			setTextSize(TypedValue.COMPLEX_UNIT_PX, Math.min(sizeW, sizeH));
-			if (sizeW < sizeH && lineCount > 1) {
-				lineSpace = (validH - sizeW * lineCount) / (lineCount - 1);
+			float textSize = Math.min(sizeW, sizeH);
+			if (lineCount > 1) {
+				lineSpace = (validH - textSize * lineCount) / (lineCount - 1);
+				if (minLineInterval > 0 && lineSpace < minLineInterval) {
+					textSize -= minLineInterval - lineSpace;
+					lineSpace = minLineInterval;
+					if (textSize < 0) {
+						textSize = 0;
+					}
+				}
 			} else {
 				lineSpace = 0;
 			}
+			setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);
 		}
 	}
 

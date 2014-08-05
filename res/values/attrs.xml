@@ -26,5 +26,8 @@
             <flag name="abs_round" value="-1" />
         </attr>
     </declare-styleable>
+    <declare-styleable name="SlideSelectView">
+        <attr name="min_line_interval" format="dimension" />
+    </declare-styleable>
 
 </resources>
