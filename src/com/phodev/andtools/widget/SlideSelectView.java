@@ -58,9 +58,11 @@ public class SlideSelectView extends TextView {
 			float sizeH = (float) validH / (float) lineCount;
 			float textSize = Math.min(sizeW, sizeH);
 			if (lineCount > 1) {
-				lineSpace = (validH - textSize * lineCount) / (lineCount - 1);
+				int spaceCount = lineCount - 1;
+				lineSpace = (validH - textSize * lineCount) / spaceCount;
 				if (minLineInterval > 0 && lineSpace < minLineInterval) {
-					textSize -= minLineInterval - lineSpace;
+					textSize -= ((minLineInterval - lineSpace) * spaceCount)
+							/ lineCount;
 					lineSpace = minLineInterval;
 					if (textSize < 0) {
 						textSize = 0;
