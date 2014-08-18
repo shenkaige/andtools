@@ -36,80 +36,141 @@ public class DoubleCardView extends ViewGroup {
 	}
 
 	private void init() {
-		//
+		setOnClickListener(selfOnClickListener);
 	}
 
 	private CardView moveLockedCard = null;
 
+	private float lastTouchX;
+	private float lastTouchY;
+
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent ev) {
+		View v = getChildAt(getShowCardIndex());
+		// boolean result = super.dispatchTouchEvent(ev);
+		boolean result = v.dispatchTouchEvent(ev);
+		lastTouchX = ev.getX();
+		lastTouchY = ev.getY();
+		//
 		switch (ev.getAction()) {
-		case MotionEvent.ACTION_DOWN:
+		case MotionEvent.ACTION_DOWN:// 任何情况我都需要判断是否是可拖动的
 			moveLockedCard = lockMoveCard((int) ev.getX(), (int) ev.getY());
+			if (moveLockedCard != null) {
+				result = true;
+			}
 			break;
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_CANCEL:
-			unlockMoveCard();
+			if (ignoreUnlockMoveCard) {
+				ignoreUnlockMoveCard = false;
+			} else {
+				unlockMoveCard(moveLockedCard);
+			}
+			moveLockedCard = null;
 			break;
 		case MotionEvent.ACTION_MOVE:
 			if (moveLockedCard != null) {
-				moveCard(moveLockedCard, (int) ev.getX(), (int) ev.getY());
+				int y = (int) ev.getY();
+				y -= moveLockedCard.getMoveOffsetY();
+				moveCard(moveLockedCard, (int) ev.getX(), y);
 				return true;
 			}
 			break;
 		}
-		return super.dispatchTouchEvent(ev);
+		return result;
 	}
+
+	private boolean ignoreUnlockMoveCard = false;
+	public OnClickListener selfOnClickListener = new OnClickListener() {
+
+		@Override
+		public void onClick(View v) {
+			int x = (int) lastTouchX;
+			int y = (int) lastTouchY;
+			CardView cv = (CardView) getChildAt(1);
+			if (isInTitle(cv, x, y) && cv.isShowable()) {
+				ignoreUnlockMoveCard = true;
+				if (isTopCardShow()) {
+					pushTopCardDown();
+				} else {
+					pushTopCardUp();
+				}
+			}
+		}
+	};
 
 	private CardView lockMoveCard(int x, int y) {
 		int count = getChildCount();
-		int l, t, r, b;
 		for (int i = 0; i < count; i++) {
 			CardView cv = (CardView) getChildAt(i);
-			if (cv != null) {
-				View tv = cv.getTitleView();
-				if (tv != null) {
-					l = tv.getLeft() + cv.getLeft();
-					t = tv.getTop() + cv.getTop();
-					r = tv.getRight();
-					b = tv.getBottom() + t;
-					if (x > l && x < r && y > t && y < b) {
-						return cv;
-					}
-				}
+			if (isInTitle(cv, x, y) && cv.isShowable()) {
+				return cv;
 			}
 		}
 		return null;
 	}
 
-	private void unlockMoveCard() {
+	private boolean isInTitle(CardView cv, int x, int y) {
+		if (cv == null) {
+			return false;
+		}
+		View tv = cv.getTitleView();
+		if (tv != null) {
+			int l = tv.getLeft() + cv.getLeft();
+			int t = tv.getTop() + cv.getTop();
+			int r = tv.getRight();
+			int b = tv.getBottom() + t;
+			if (x > l && x < r && y > t && y < b) {
+				cv.setMoveOffset(x - l, y - t);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void unlockMoveCard(CardView moveLockedCard) {
 		if (moveLockedCard != null) {
 			int cardHeight = moveLockedCard.getHeight();
 			int startY = moveLockedCard.getTop();
-			//
-			int titleHeight;
-			if (moveLockedCard.getTitleView() == null) {
-				titleHeight = 0;
-			} else {
-				titleHeight = moveLockedCard.getTitleView().getHeight();
-			}
-			//
 			float factor;
 			if (moveLockedCard.isExpanding()) {
-				factor = 0.2f;
+				factor = 0.1f;
+				moveLockedCard.setExpanding(false);
 			} else {
-				factor = 0.8f;
+				factor = 0.9f;
+				moveLockedCard.setExpanding(true);
 			}
-			//
-			int distY;
-			if (startY > (cardHeight * factor)) {
-				distY = cardHeight - startY - titleHeight;
+			boolean show = startY > (cardHeight * factor);
+			if (show) {
+				currentShowCardIndex = 1;
 			} else {
-				distY = -startY;
+				currentShowCardIndex = 0;
 			}
-			scroller.start(moveLockedCard, startY, distY);
+			actionWithAnim(moveLockedCard, show);
 		}
-		moveLockedCard = null;
+	}
+
+	private void actionWithAnim(CardView cv, boolean show) {
+		if (cv == null) {
+			return;
+		}
+		int cardHeight = cv.getMeasuredHeight();
+		int startY = cv.getTop();
+		//
+		int titleHeight;
+		if (cv.getTitleView() == null) {
+			titleHeight = 0;
+		} else {
+			titleHeight = cv.getTitleView().getMeasuredHeight();
+		}
+		//
+		int distY;
+		if (show) {
+			distY = -startY;
+		} else {
+			distY = cardHeight - startY - titleHeight;
+		}
+		scroller.start(cv, startY, distY);
 	}
 
 	/**
@@ -137,9 +198,13 @@ public class DoubleCardView extends ViewGroup {
 			b = t + c2.getMeasuredHeight();
 			c2.layout(l, t, r, b);
 		}
+		invalidate();
 	}
 
 	private ScrollerRunnable scroller = new ScrollerRunnable();
+
+	private final static int fps = 1000 / 60;
+	private final static int scroll_duration = 300;
 
 	class ScrollerRunnable implements Runnable {
 		private Scroller mScroller;
@@ -152,11 +217,10 @@ public class DoubleCardView extends ViewGroup {
 
 		public void start(CardView cardView, int startY, int distY) {
 			if (!mScroller.isFinished()) {
-				mScroller.forceFinished(true);
-				removeCallbacks(this);
+				return;
 			}
 			this.cardView = cardView;
-			mScroller.startScroll(0, startY, 0, distY, 300);
+			mScroller.startScroll(0, startY, 0, distY, scroll_duration);
 			post(this);
 		}
 
@@ -172,10 +236,21 @@ public class DoubleCardView extends ViewGroup {
 			}
 			if (mScroller.computeScrollOffset()) {
 				moveCard(cardView, cardView.getLeft(), mScroller.getCurrY());
-				postDelayed(this, 1000 / 60);
+				postDelayed(this, fps);
+			} else {
+				onCardShowChanged();
 			}
 		}
+	}
 
+	private void onCardShowChanged() {
+		if (mCardListener != null) {
+			if (isTopCardShow()) {
+				mCardListener.onPullUp();
+			} else {
+				mCardListener.onPullDown();
+			}
+		}
 	}
 
 	@Override
@@ -210,21 +285,32 @@ public class DoubleCardView extends ViewGroup {
 
 	private int currentShowCardIndex = 0;// 默认显示第一个
 
-	/**
-	 * 获取显示的Card的index
-	 * 
-	 * @return
-	 */
-	public int getShowCard() {
+	public int getShowCardIndex() {
 		return currentShowCardIndex;
 	}
 
+	public boolean isTopCardShow() {
+		return currentShowCardIndex == 1;
+	}
+
+	public void pushTopCardUp() {
+		currentShowCardIndex = 1;
+		actionWithAnim((CardView) getChildAt(1), true);
+	}
+
+	public void pushTopCardDown() {
+		currentShowCardIndex = 0;
+		actionWithAnim((CardView) getChildAt(1), false);
+	}
+
+	public static final int first_card = 0;
+	public static final int second_card = 1;
+
 	/**
-	 * 设置要显示的card
-	 * 
 	 * @param index
+	 *            {@link #first_card} {@link #second_card}
 	 */
-	public void setShowCard(int index) {
+	public void setShowcard(int index) {
 		if (index == currentShowCardIndex) {
 			return;
 		}
@@ -277,5 +363,19 @@ public class DoubleCardView extends ViewGroup {
 				perCardViewTitleHeight = cvt.getMeasuredHeight();
 			}
 		}
+	}
+
+	public interface CardListener {
+
+		public void onPullUp();
+
+		public void onPullDown();
+
+	}
+
+	private CardListener mCardListener;
+
+	public void setCardListener(CardListener l) {
+		mCardListener = l;
 	}
 }
