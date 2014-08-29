@@ -167,7 +167,8 @@ public class QuickReturnLayout extends ViewGroup {
 			if (cv == null) {
 				directPassAllTouch = true;
 			} else {
-				directPassAllTouch = preMoveY < cv.getTop();
+				// directPassAllTouch = preMoveY < cv.getTop();
+				directPassAllTouch = false;
 			}
 		}
 		if (directPassAllTouch) {
@@ -188,12 +189,14 @@ public class QuickReturnLayout extends ViewGroup {
 				}
 				if (!pastScrollToContentView) {
 					checkDoFollow(preActionY, curActionY);
-					return true;
+					ev.setAction(MotionEvent.ACTION_CANCEL);// 解决滑动的是误点item
+					// return true;
 				}
 			} else {
 				if (preActionY < curActionY) {// scroll down
 					checkDoFollow(preActionY, curActionY);
-					return true;
+					ev.setAction(MotionEvent.ACTION_CANCEL);// 解决滑动的是误点item
+					// return true;
 				}
 			}
 		}
@@ -202,7 +205,7 @@ public class QuickReturnLayout extends ViewGroup {
 	}
 
 	private boolean checkDoFollow(float lastActionY, float curActionY) {
-		if (Math.abs(lastActionY - curActionY) > 0.1f) {
+		if (Math.abs(lastActionY - curActionY) > 1) {
 			doFollow(lastActionY, curActionY);
 			return true;
 		} else {
