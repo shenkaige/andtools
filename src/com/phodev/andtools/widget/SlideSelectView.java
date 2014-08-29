@@ -119,12 +119,15 @@ public class SlideSelectView extends TextView {
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_CANCEL:
 		case MotionEvent.ACTION_OUTSIDE:
+			lastSelectIndex = -1;
 			checkSelectingState(false);
 			break;
 		}
 		super.dispatchTouchEvent(event);
 		return true;
 	}
+
+	private int lastSelectIndex = -1;
 
 	private void checkMapingIndex(float x, float y) {
 		if (mSelectListener == null || itemStrs == null || itemStrs.length <= 0) {
@@ -143,6 +146,11 @@ public class SlideSelectView extends TextView {
 		} else if (lineIndex >= itemStrs.length) {
 			lineIndex = itemStrs.length - 1;
 		}
+		if (lastSelectIndex == lineIndex) {
+			// not changed
+			return;
+		}
+		lastSelectIndex = lineIndex;
 		mSelectListener.onSlideSelectedChanged(itemStrs[lineIndex], lineIndex);
 	}
 
