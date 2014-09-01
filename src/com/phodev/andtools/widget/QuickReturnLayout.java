@@ -155,27 +155,18 @@ public class QuickReturnLayout extends ViewGroup {
 		}
 	}
 
-	private boolean directPassAllTouch = false;
 	private float preMoveY;
+	private boolean lastTouchDownInvokeMoved;
 
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent ev) {
-		final int action = ev.getAction();
-		if (action == MotionEvent.ACTION_DOWN) {
+		switch (ev.getAction()) {
+		case MotionEvent.ACTION_DOWN:
 			preMoveY = ev.getY();
-			View cv = getContentView();
-			if (cv == null) {
-				directPassAllTouch = true;
-			} else {
-				// directPassAllTouch = preMoveY < cv.getTop();
-				directPassAllTouch = false;
-			}
-		}
-		if (directPassAllTouch) {
-			return super.dispatchTouchEvent(ev);
-		}
-		// ---------------Handler Content View TouchEvent---------------//
-		if (action == MotionEvent.ACTION_MOVE) {
+			lastTouchDownInvokeMoved = false;
+			isFlolowing = false;
+			break;
+		case MotionEvent.ACTION_MOVE:
 			float curActionY = ev.getY();
 			float preActionY = preMoveY;
 			preMoveY = curActionY;
@@ -189,27 +180,34 @@ public class QuickReturnLayout extends ViewGroup {
 				}
 				if (!pastScrollToContentView) {
 					checkDoFollow(preActionY, curActionY);
-					ev.setAction(MotionEvent.ACTION_CANCEL);// 解决滑动的是误点item
-					// return true;
+					return true;
 				}
 			} else {
 				if (preActionY < curActionY) {// scroll down
 					checkDoFollow(preActionY, curActionY);
-					ev.setAction(MotionEvent.ACTION_CANCEL);// 解决滑动的是误点item
-					// return true;
+					return true;
 				}
 			}
+			break;
+		case MotionEvent.ACTION_UP:
+			if (lastTouchDownInvokeMoved) {
+				ev.setAction(MotionEvent.ACTION_CANCEL);
+			}
+			break;
 		}
 		super.dispatchTouchEvent(ev);
 		return true;
 	}
 
-	private boolean checkDoFollow(float lastActionY, float curActionY) {
-		if (Math.abs(lastActionY - curActionY) > 1) {
+	private boolean isFlolowing;
+
+	private void checkDoFollow(float lastActionY, float curActionY) {
+		if (isFlolowing) {
 			doFollow(lastActionY, curActionY);
-			return true;
-		} else {
-			return false;
+		} else if (Math.abs(lastActionY - curActionY) > 2f) {
+			isFlolowing = true;
+			lastTouchDownInvokeMoved = true;
+			checkDoFollow(lastActionY, curActionY);
 		}
 	}
 
