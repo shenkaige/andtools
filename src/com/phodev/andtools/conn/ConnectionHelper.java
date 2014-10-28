@@ -447,6 +447,7 @@ public class ConnectionHelper {
 		public static final int RESULT_STATE_OK = 200;
 		public static final int RESULT_STATE_SERVER_ERROR = 500;
 		public static final int RESULT_STATE_NETWORK_ERROR = -1;
+		public static final int RESULT_STATE_CANCLED = -2;
 		public static final int RESULT_STATE_TIME_OUT = 408;
 
 		public void onResult(int resultCode, int reqId, Object tag, String resp);
@@ -460,6 +461,57 @@ public class ConnectionHelper {
 		public void onRequestCanceled(int reqId, Object tag) {
 
 		}
+	}
+
+	public static abstract class RichRequestReceiver implements RequestReceiver {
+
+		@Override
+		public void onResult(int resultCode, int reqId, Object tag, String resp) {
+			onBeforeDispatch(reqId, resultCode, resp);
+			if (!doResult(reqId, resultCode, resp)) {
+				if (resultCode == RequestReceiver.RESULT_STATE_OK) {
+					doSuccess(reqId, resultCode, resp);
+				} else {
+					doFailed(reqId, resultCode, resp);
+				}
+			}
+			onEndDispatch(reqId, resultCode, resp);
+		}
+
+		@Override
+		public void onRequestCanceled(int reqId, Object tag) {
+			onBeforeDispatch(reqId, RequestReceiver.RESULT_STATE_CANCLED, null);
+			doCancale(reqId);
+			onEndDispatch(reqId, RequestReceiver.RESULT_STATE_CANCLED, null);
+		}
+
+		/**
+		 * 在Result开始分发之前
+		 */
+		public void onBeforeDispatch(int reqId, int resultCode, String resp) {
+
+		}
+
+		/**
+		 * 在Result开始分发之后
+		 */
+		public void onEndDispatch(int reqId, int resultCode, String resp) {
+
+		}
+
+		public boolean doResult(int reqId, int resultCode, String resp) {
+			return false;
+		}
+
+		public void doSuccess(int reqId, int resultCode, String resp) {
+		}
+
+		public void doFailed(int reqId, int resultCode, String errorResp) {
+		}
+
+		public void doCancale(int reqId) {
+		}
+
 	}
 
 	// public interface HttpTask extends Runnable {
