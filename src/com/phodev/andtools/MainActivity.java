@@ -17,6 +17,7 @@ import com.phodev.andtools.adapter.InnerBaseAdapter;
 import com.phodev.andtools.common.SimpleDesc;
 import com.phodev.andtools.samples.AqueryFragment;
 import com.phodev.andtools.samples.ChartViewFragment;
+import com.phodev.andtools.samples.CircleLogoutBoxFragment;
 import com.phodev.andtools.samples.DonwloadFragment;
 import com.phodev.andtools.samples.HttpConnectionFragment;
 import com.phodev.andtools.samples.ImageMarqueeFragment;
@@ -53,6 +54,7 @@ public class MainActivity extends Activity {
 		data.add(AqueryFragment.class);
 		data.add(SlideSelectViewFragment.class);
 		data.add(WaterWaveFragment.class);
+		data.add(CircleLogoutBoxFragment.class);
 	}
 
 	@Override
