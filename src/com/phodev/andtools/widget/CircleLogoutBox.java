@@ -26,10 +26,12 @@ public class CircleLogoutBox extends FrameLayout {
 
 	public CircleLogoutBox(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		setWillNotDraw(false);
 	}
 
 	public CircleLogoutBox(Context context) {
 		super(context);
+		setWillNotDraw(false);
 	}
 
 	private float centerX;
@@ -122,6 +124,7 @@ public class CircleLogoutBox extends FrameLayout {
 	public void startLogout() {
 		mStartTime = System.currentTimeMillis();
 		isPlaying = true;
+		isBoxVisible = true;
 		postInvalidate();
 	}
 
