@@ -26,6 +26,7 @@ import com.phodev.andtools.samples.QuickReturnFragment;
 import com.phodev.andtools.samples.RightSlidingMenuFragment;
 import com.phodev.andtools.samples.RoundDiscFragment;
 import com.phodev.andtools.samples.SlideSelectViewFragment;
+import com.phodev.andtools.samples.SplitLayoutFragment;
 import com.phodev.andtools.samples.VerticleMarqueeTextFragment;
 import com.phodev.andtools.samples.WaterWaveFragment;
 import com.phodev.andtools.samples.WebPageDriverFragment;
@@ -55,6 +56,7 @@ public class MainActivity extends Activity {
 		data.add(SlideSelectViewFragment.class);
 		data.add(WaterWaveFragment.class);
 		data.add(CircleLogoutBoxFragment.class);
+		data.add(SplitLayoutFragment.class);
 	}
 
 	@Override
