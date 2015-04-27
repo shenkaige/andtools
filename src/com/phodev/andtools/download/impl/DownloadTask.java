@@ -31,7 +31,6 @@ public class DownloadTask {
 	private ExecutorService executor;
 	private DownloadFile downloadFile;
 	private TaskListener taskListener;
-	private boolean isRunning = false;
 	private TaskRunner currentRunner;
 	private Context context;
 
@@ -45,13 +44,12 @@ public class DownloadTask {
 
 	public synchronized boolean start() {
 		// 如果已经启动了，则直接返回,否则开启任务
-		if (isRunning) {
+		if (isRunning()) {
 			return true;
 		}
 		if (executor == null || executor.isShutdown()) {
 			return false;
 		}
-		isRunning = true;
 		currentRunner = new TaskRunner();
 		Future<TaskRunner> f = executor.submit(currentRunner, currentRunner);
 		currentRunner.boundFutrue(f);
@@ -60,14 +58,13 @@ public class DownloadTask {
 
 	public synchronized boolean stop() {
 		// 停止任务,并取消和线程的绑定,并移除block runner，再次启动的时候创建新的block runner
-		if (!isRunning) {
+		if (!isRunning()) {
 			return true;
 		}
 		if (currentRunner != null) {
 			currentRunner.stop();
 		}
 		currentRunner = null;
-		isRunning = false;
 		return true;
 	}
 
@@ -77,7 +74,7 @@ public class DownloadTask {
 	 * @return
 	 */
 	public synchronized boolean isRunning() {
-		return isRunning;
+		return currentRunner != null && !currentRunner.interrupt;
 	}
 
 	private int blockTotalIncrease = 0;
@@ -101,9 +98,6 @@ public class DownloadTask {
 			// Block下载失败,判断原因看是否需要开启线程继续下载
 			// 1,如果是网络部可用，则停止全部下载,并通知外部监听
 			// 2,如果是连接超时则尝试重新加载
-			if (currentRunner != null) {
-				currentRunner.innerStopAllLoader();
-			}
 			int e = TaskListener.TASK_ERROR_UNKOWN;
 			switch (errorCode) {
 			case ERROR_INVALID_BALOCK:
@@ -121,7 +115,7 @@ public class DownloadTask {
 			default:
 				break;
 			}
-			onDownloadError(e);
+			onDownloadError(e, true);
 		}
 
 		@Override
@@ -129,7 +123,7 @@ public class DownloadTask {
 			if (currentRunner != null) {
 				currentRunner.innerStopAllLoader();
 			}
-			onDownloadError(TaskListener.TASK_ERROR_UNKOWN);
+			onDownloadError(TaskListener.TASK_ERROR_UNKOWN, true);
 		}
 
 	};
@@ -190,7 +184,7 @@ public class DownloadTask {
 				url = new URL(sourceUrl);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
-				onDownloadError(TaskListener.TASK_ERROR_MALFORMED_URL);
+				onDownloadError(TaskListener.TASK_ERROR_MALFORMED_URL, true);
 				return;
 			}
 			synchronized (blocks) {
@@ -205,7 +199,9 @@ public class DownloadTask {
 							e.printStackTrace();
 						} finally {
 							if (blocks.size() <= 0) {
-								onDownloadError(TaskListener.TASK_ERROR_INIT_BLOCKS_FAILED);
+								onDownloadError(
+										TaskListener.TASK_ERROR_INIT_BLOCKS_FAILED,
+										true);
 								return;
 							}
 						}
@@ -216,7 +212,9 @@ public class DownloadTask {
 			synchronized (loaders) {
 				for (DownloadBlock b : blocks) {
 					if (executor.isShutdown()) {
-						onDownloadError(TaskListener.TASK_ERROR_THREAD_POOL_SHUTDOWN);
+						onDownloadError(
+								TaskListener.TASK_ERROR_THREAD_POOL_SHUTDOWN,
+								true);
 						break;
 					}
 					if (!b.isCompleteLoad()) {
@@ -348,7 +346,14 @@ public class DownloadTask {
 		}
 	}
 
-	private void onDownloadError(int taskErrorCode) {
+	private void onDownloadError(int taskErrorCode, boolean checkCloseTaskRunner) {
+		if (checkCloseTaskRunner) {
+			synchronized (currentRunner) {
+				if (currentRunner != null) {
+					currentRunner.innerStopAllLoader();
+				}
+			}
+		}
 		int oldStatus = downloadFile.getStatus();
 		downloadFile.setStatus(DownloadFile.status_download_error);
 		if (oldStatus != DownloadFile.status_download_error) {
@@ -384,7 +389,7 @@ public class DownloadTask {
 	}
 
 	public interface TaskListener {
-		/** 无效的URL*/
+		/** 无效的URL */
 		public static final int TASK_ERROR_MALFORMED_URL = 0;
 		public static final int TASK_ERROR_INIT_BLOCKS_FAILED = 1;
 		public static final int TASK_ERROR_THREAD_POOL_SHUTDOWN = 2;
