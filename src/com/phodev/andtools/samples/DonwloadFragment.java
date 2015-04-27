@@ -119,8 +119,8 @@ public class DonwloadFragment extends InnerFragment implements OnClickListener {
 		@Override
 		public void onProgress(String url, long total, long loaded, int speed)
 				throws RemoteException {
-			sendState("-----Size : " + total / 1024 + "kb \nLoaded : " + loaded
-					/ 1024 + "kb \n--Speed : " + speed / 1024 + "kb/s");
+			sendState("------Loaded : " + (loaded / 1024) + "/" + (total / 1024)
+					+ "kb" + "\n        Speed : " + speed / 1024 + "kb/s");
 		}
 
 		@Override
@@ -131,11 +131,13 @@ public class DonwloadFragment extends InnerFragment implements OnClickListener {
 		@Override
 		public void onDownloadFileStatusChanged(DownloadFile file)
 				throws RemoteException {
+			sendState("onDownloadFileStatusChanged,status:" + file.getStatus());
 		}
 
 		@Override
 		public void onDownloadFileRemove(DownloadFile file)
 				throws RemoteException {
+			sendState("onDownloadFileRemove");
 		}
 
 		@Override
@@ -163,7 +165,7 @@ public class DonwloadFragment extends InnerFragment implements OnClickListener {
 		@Override
 		public void handleMessage(Message msg) {
 			if (msg.what == what_download_state) {
-				stateTv.setText(msg.obj + "");
+				stateTv.setText(msg.obj + "\n" + stateTv.getText().toString());
 			}
 		}
 
