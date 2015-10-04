@@ -29,5 +29,14 @@
     <declare-styleable name="SlideSelectView">
         <attr name="min_line_interval" format="dimension" />
     </declare-styleable>
+    <declare-styleable name="CircleHeader">
+        <attr name="circle_center_x_offset" format="dimension" />
+        <attr name="circle_radius" format="dimension" />
+        <attr name="circle_area_usable" format="boolean" />
+        <attr name="circle_action">
+            <flag name="draw" value="0x0" />
+            <flag name="cut" value="0x1" />
+        </attr>
+    </declare-styleable>
 
 </resources>
