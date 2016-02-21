@@ -1,8 +1,8 @@
 package com.phodev.andtools.download.impl;
 
-import android.text.TextUtils;
-
 import com.phodev.andtools.download.DownloadFile;
+
+import android.text.TextUtils;
 
 /**
  * 下载块
@@ -13,20 +13,21 @@ public class DownloadBlock {
 	private String id;
 	private DownloadFile downloadFile;
 	private String sourceUrl;
-	private long start;
-	private long end;
-	private long loadedSize;
+	private String realUrl;
+	private int start;
+	private int end;
+	private int loadedSize;
 
-	public DownloadBlock(DownloadFile dFile, String sourceUrl, long start,
-			long end, long loadedSize) {
+	public DownloadBlock(DownloadFile dFile, String sourceUrl, String realUrl, int start, int end, int loadedSize) {
 		this.downloadFile = dFile;
 		this.sourceUrl = sourceUrl;
 		this.start = start;
 		this.end = end;
 		this.loadedSize = loadedSize;
+		this.realUrl = realUrl;
 	}
 
-	protected void updateBlock(long loadedSize) {
+	protected void updateBlock(int loadedSize) {
 		// 更新自己的进度
 		this.loadedSize = loadedSize;
 	}
@@ -47,15 +48,28 @@ public class DownloadBlock {
 		return sourceUrl;
 	}
 
-	public long getStart() {
+	/**
+	 * 获取真实的下载地址
+	 * 
+	 * @return
+	 */
+	public String getRealUrl() {
+		return realUrl;
+	}
+
+	public void setRealUrl(String realUrl) {
+		this.realUrl = realUrl;
+	}
+
+	public int getStart() {
 		return start;
 	}
 
-	public long getEnd() {
+	public int getEnd() {
 		return end;
 	}
 
-	public long getLoadedSize() {
+	public int getLoadedSize() {
 		return loadedSize;
 	}
 
@@ -64,8 +78,7 @@ public class DownloadBlock {
 	 * 是否是无效的
 	 */
 	public boolean isInvalid() {
-		return downloadFile == null || TextUtils.isEmpty(sourceUrl)
-				|| start < 0 || end < 0 || end < start;
+		return downloadFile == null || TextUtils.isEmpty(sourceUrl) || start < 0 || end < 0 || end < start;
 	}
 
 	/**
@@ -79,9 +92,8 @@ public class DownloadBlock {
 
 	@Override
 	public String toString() {
-		return "DownloadBlock [id=" + id + ", sourceUrl=" + sourceUrl
-				+ ", start=" + start + ", end=" + end + ", loadedSize="
-				+ loadedSize + "]";
+		return "DownloadBlock [id=" + id + ", sourceUrl=" + sourceUrl + ", start=" + start + ", end=" + end
+				+ ", loadedSize=" + loadedSize + "]";
 	}
 
 }

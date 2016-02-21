@@ -10,10 +10,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.Future;
 
-import android.util.Log;
-
 import com.phodev.andtools.download.Constants;
 import com.phodev.andtools.download.Utils;
+
+import android.util.Log;
 
 /**
  * 文件分段加载器
@@ -62,12 +62,12 @@ public class BlockDownloader implements Runnable {
 			}
 			return;
 		}
-		long loaded = mBlock.getLoadedSize();
+		int loaded = mBlock.getLoadedSize();
 		if (loaded < 0) {
 			loaded = 0;
 		}
-		long rangeStart = mBlock.getStart() + loaded;
-		long rangeEnd = mBlock.getEnd();
+		int rangeStart = mBlock.getStart() + loaded;
+		int rangeEnd = mBlock.getEnd();
 		if (rangeStart >= rangeEnd) {
 			notifyWorkDone();
 			interrupt();
@@ -76,11 +76,8 @@ public class BlockDownloader implements Runnable {
 		//
 		final String sourceUrl = mBlock.getSourceUrl();
 		//
-		File file = mBlock.getDownloadFile().getFile();
-		if (file == null) {
-			return;
-		}
-		synchronized (BlockDownloader.class) {
+		final File file = new File(mBlock.getDownloadFile().getFilePath());
+		synchronized (BlockDownloader.class) {// FIXME maybe use other sync lock
 			// 避免同一个Task中的多个block同时创建
 			if (!file.exists()) {
 				try {
@@ -176,13 +173,11 @@ public class BlockDownloader implements Runnable {
 		/** 未知IO Exception */
 		public final static int ERROR_UNKONW_IO_EXCEPTION = 6;
 
-		public void onBlockIncrease(BlockDownloader loader,
-				DownloadBlock block, int increase);
+		public void onBlockIncrease(BlockDownloader loader, DownloadBlock block, int increase);
 
 		public void onBlockLoadDone(BlockDownloader loader, DownloadBlock block);
 
-		public void onBlockLoadFailed(BlockDownloader loader,
-				DownloadBlock block, int errorCode);
+		public void onBlockLoadFailed(BlockDownloader loader, DownloadBlock block, int errorCode);
 
 		public void onUnkonwIOException(BlockDownloader loader, IOException ex);
 	}

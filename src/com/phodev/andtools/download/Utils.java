@@ -4,7 +4,10 @@ import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -17,8 +20,7 @@ public class Utils {
 	private Utils() {
 	}
 
-	public static void configBlockHeader(HttpURLConnection conn,
-			String referer, long startPos, long endPos) {
+	public static void configBlockHeader(HttpURLConnection conn, String referer, int startPos, int endPos) {
 		if (conn == null) {
 			return;
 		}
@@ -58,8 +60,7 @@ public class Utils {
 		return header;
 	}
 
-	public static void debugPrintResponseHeader(HttpURLConnection http,
-			String tag) {
+	public static void debugPrintResponseHeader(HttpURLConnection http, String tag) {
 		if (Constants.DEBUG) {
 			Map<String, String> header = getResponseHeader(http);
 			for (Map.Entry<String, String> e : header.entrySet()) {
@@ -69,11 +70,7 @@ public class Utils {
 	}
 
 	public static File getDownloadDir() {
-		String dirPath = Environment.getExternalStorageDirectory()
-				.getAbsolutePath()
-				+ File.separator
-				+ Constants.relative_download_path;
-		File dir = new File(dirPath);
+		File dir = new File(Constants.download_path);
 		if (!dir.exists()) {
 			dir.mkdirs();
 		}
@@ -84,8 +81,7 @@ public class Utils {
 		if (fileName == null || fileName.length() <= 0) {
 			return null;
 		}
-		return new File(getDownloadDir().getAbsolutePath() + File.separator
-				+ fileName);
+		return new File(getDownloadDir().getAbsolutePath() + File.separator + fileName);
 	}
 
 	public static String createDownloadOutFilePath(String fileName) {
@@ -113,26 +109,126 @@ public class Utils {
 	// }
 	//
 	public static boolean isNetworkAvailable(Context context) {
-		ConnectivityManager cm = (ConnectivityManager) context
-				.getSystemService(Context.CONNECTIVITY_SERVICE);
+		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo info = cm.getActiveNetworkInfo();
 		return (info != null && info.isConnected());
 	}
 
 	public static boolean isWifiNetworkAvailable(Context context) {
-		ConnectivityManager cm = (ConnectivityManager) context
-				.getSystemService(Context.CONNECTIVITY_SERVICE);
-		State wifi = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
-				.getState();
+		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		State wifi = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();
 		return (wifi == State.CONNECTED);
 	}
 
 	public static boolean isSDCardMounted() {
-		if (Environment.getExternalStorageState().equals(
-				Environment.MEDIA_MOUNTED)) {
+		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
 			return true;
 		} else {
 			return false;
 		}
+	}
+
+	/**
+	 * 根据Connection和DownloadFile获取文件名
+	 * 
+	 * @param conn
+	 * @param df
+	 * @return
+	 */
+	public static String makeDownloadFileName(HttpURLConnection conn, DownloadFile df) {
+		String filename = null;
+		String url = df.getRealUrl();
+		if (url == null) {
+			url = df.getSourceUrl();
+		}
+		if (url != null && url.lastIndexOf('/') > 0) {
+			filename = url.substring(url.lastIndexOf('/') + 1);
+		}
+		filename = filterDownloadFileName(filename);// filter special char
+		if (isTextEmpty(filename)) {
+			filename = getFileNameFromConnection(conn, null);
+		}
+		//
+		filename = filterDownloadFileName(filename);// filter special char
+		if (isTextEmpty(filename)) {
+			filename = System.currentTimeMillis() + ".unkonw";
+		}
+		String namePrefix = null;
+		String nameEndPart = null;
+		final int dotIndex = filename.lastIndexOf(".");
+		if (dotIndex > 0) {
+			namePrefix = filename.substring(0, dotIndex);
+			nameEndPart = filename.substring(dotIndex, filename.length());
+		} else {
+			namePrefix = filename;
+			nameEndPart = "";
+		}
+		int i = 0;
+		while (true) {
+			filename = i > 0 ? namePrefix + "(" + i + ")" + nameEndPart : filename;
+			File outFile = createDownloadOutFile(filename);
+			if (outFile.exists()) {
+				i++;
+			} else {
+				return filename;
+			}
+		}
+	}
+
+	/**
+	 * filter special char
+	 * 
+	 * @param fileName
+	 * @return
+	 */
+	public static String filterDownloadFileName(String fileName) {
+		if (fileName == null || fileName.length() <= 0) {
+			return fileName;
+		}
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < fileName.length(); i++) {
+			char c = fileName.charAt(i);
+			switch (c) {
+			// \/:*?"<>|
+			case '\0':
+			case '/':
+			case '\\':
+			case ':':
+			case '?':
+			case '<':
+			case '>':
+			case '|':
+			case ' ':
+				break;// ignore
+			default:
+				sb.append(c);
+				break;
+			}
+		}
+		return sb.toString();
+	}
+
+	public static String getFileNameFromConnection(HttpURLConnection conn, String def) {
+		try {
+			for (int i = 0;; i++) {
+				// if i > header max position will return null
+				String mine = conn.getHeaderField(i);
+				if (mine == null) {
+					return def;
+				} else if ("content-disposition".equals(conn.getHeaderFieldKey(i).toLowerCase(Locale.getDefault()))) {
+					Matcher m = Pattern.compile(".*filename=(.*)").matcher(mine.toLowerCase(Locale.getDefault()));
+					if (m.find()) {
+						return m.group(1);
+					}
+				}
+			}
+		} catch (Exception e) {
+			// ignore
+			return def;
+		}
+	}
+
+	public static boolean isTextEmpty(String text) {
+		return text == null || text.length() <= 0;
 	}
 }

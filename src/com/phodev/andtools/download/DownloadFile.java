@@ -1,7 +1,5 @@
 package com.phodev.andtools.download;
 
-import java.io.File;
-
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
@@ -12,15 +10,22 @@ import android.util.Log;
  * @author skg
  */
 public class DownloadFile implements Parcelable {
-	public final static int status_download_complete = 1;
-	public final static int status_download_loading = 2;
-	public final static int status_download_paused = 3;
-	public final static int status_download_error = 4;
+	public final static int STATUS_DOWNLOAD_WAIT = 0;
+	public final static int STATUS_DOWNLOAD_COMPLETE = 1;
+	public final static int STATUS_DOWNLOAD_LOADING = 2;
+	public final static int STATUS_DOWNLOAD_PAUSED = 3;
+	public final static int STATUS_DOWNLOAD_ERROR = 4;
+
 	private String sourceUrl;
+	private String realUrl;
 	private String fileName;
-	private int status = status_download_paused;// default
-	private long fileSize;
-	private long loadedSize;
+	private int status = STATUS_DOWNLOAD_WAIT;// default
+	private int fileSize;
+	private int loadedSize;
+	private long createtime;
+	// apk need
+	private String thumbUri;
+	private String title;
 
 	public DownloadFile() {
 	}
@@ -36,8 +41,13 @@ public class DownloadFile implements Parcelable {
 		sourceUrl = in.readString();
 		fileName = in.readString();
 		status = in.readInt();
-		fileSize = in.readLong();
-		loadedSize = in.readLong();
+		fileSize = in.readInt();
+		loadedSize = in.readInt();
+		//
+		thumbUri = in.readString();
+		realUrl = in.readString();
+		title = in.readString();
+		createtime = in.readLong();
 	}
 
 	@Override
@@ -50,8 +60,13 @@ public class DownloadFile implements Parcelable {
 		dest.writeString(sourceUrl);
 		dest.writeString(fileName);
 		dest.writeInt(status);
-		dest.writeLong(fileSize);
-		dest.writeLong(loadedSize);
+		dest.writeInt(fileSize);
+		dest.writeInt(loadedSize);
+		//
+		dest.writeString(realUrl);
+		dest.writeString(thumbUri);
+		dest.writeString(title);
+		dest.writeLong(createtime);
 		if (Constants.DEBUG) {
 			Log.d("DownloadFile", "writeToParcel  :" + hashCode());
 		}
@@ -80,26 +95,14 @@ public class DownloadFile implements Parcelable {
 	}
 
 	public void setFileName(String fileName) {
-		if (this.fileName != null && fileName != null
-				&& this.fileName.equals(fileName)) {
+		if (this.fileName != null && fileName != null && this.fileName.equals(fileName)) {
 			return;
 		}
 		this.fileName = fileName;
-		file = null;
 	}
 
-	private File file;
-
-	public File getFile() {
-		if (fileName == null) {
-			file = null;
-			return null;
-		}
-		if (file != null) {
-			return file;
-		}
-		file = Utils.createDownloadOutFile(fileName);
-		return file;
+	public String getFilePath() {
+		return Utils.createDownloadOutFilePath(getFileName());
 	}
 
 	public int getStatus() {
@@ -110,27 +113,84 @@ public class DownloadFile implements Parcelable {
 		this.status = status;
 	}
 
-	public long getFileSize() {
+	public int getFileSize() {
 		return fileSize;
 	}
 
-	public void setFileSize(long fileSize) {
+	public void setFileSize(int fileSize) {
 		this.fileSize = fileSize;
 	}
 
-	public long getLoadedSize() {
+	public int getLoadedSize() {
 		return loadedSize;
 	}
 
-	public void setLoadedSize(long loadedSize) {
+	public void setLoadedSize(int loadedSize) {
 		this.loadedSize = loadedSize;
+	}
+
+	public String getThumbUri() {
+		return thumbUri;
+	}
+
+	public void setThumbUri(String thumbUri) {
+		this.thumbUri = thumbUri;
+	}
+
+	public String getRealUrl() {
+		return realUrl;
+	}
+
+	public void setRealUrl(String realUrl) {
+		this.realUrl = realUrl;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public long getCreatetime() {
+		return createtime;
+	}
+
+	public void setCreatetime(long createtime) {
+		this.createtime = createtime;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((sourceUrl == null) ? 0 : sourceUrl.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		DownloadFile other = (DownloadFile) obj;
+		if (sourceUrl == null) {
+			if (other.sourceUrl != null)
+				return false;
+		} else if (!sourceUrl.equals(other.sourceUrl))
+			return false;
+		return true;
 	}
 
 	@Override
 	public String toString() {
-		return "DownloadFile [sourceUrl=" + sourceUrl + ", fileName="
-				+ fileName + ", status=" + status + ", fileSize=" + fileSize
-				+ ", loadedSize=" + loadedSize + ", file=" + file + "]";
+		return "DownloadFile [sourceUrl=" + sourceUrl + ", realUrl=" + realUrl + ", fileName=" + fileName + ", status="
+				+ status + ", fileSize=" + fileSize + ", loadedSize=" + loadedSize + ", createtime=" + createtime
+				+ ", thumbUri=" + thumbUri + ", title=" + title + "]";
 	}
 
 }

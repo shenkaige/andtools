@@ -3,17 +3,17 @@ package com.phodev.andtools.download.impl;
 import java.util.List;
 import java.util.UUID;
 
+import com.phodev.andtools.download.Constants;
+import com.phodev.andtools.download.DownloadFile;
+import com.phodev.andtools.download.impl.DownloadDatabase.TABLE_DownloadBlock;
+import com.phodev.andtools.download.impl.DownloadDatabase.TABLE_DownloadFile;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 import android.util.Log;
-
-import com.phodev.andtools.download.Constants;
-import com.phodev.andtools.download.DownloadFile;
-import com.phodev.andtools.download.impl.DownloadDatabase.TABLE_DownloadBlock;
-import com.phodev.andtools.download.impl.DownloadDatabase.TABLE_DownloadFile;
 
 /**
  * 下载记录管理器
@@ -44,8 +44,8 @@ public class DownloadRecorder {
 	 * @param blockGroup
 	 * @param sourceUrl
 	 */
-	public void addBlocks(Context context, List<DownloadBlock> blockGroup,
-			String sourceUrl) {
+	public synchronized void addBlocks(Context context, List<DownloadBlock> blockGroup, String sourceUrl,
+			String realUrl) {
 		if (blockGroup == null || blockGroup.isEmpty()) {
 			return;
 		}
@@ -59,6 +59,7 @@ public class DownloadRecorder {
 		for (DownloadBlock b : blockGroup) {
 			String uuid = UUID.randomUUID().toString();
 			b.setId(uuid);
+			b.setRealUrl(realUrl);
 
 			copy(cv, b);
 			db.insert(TABLE_DownloadBlock._table_name, null, cv);
@@ -76,7 +77,7 @@ public class DownloadRecorder {
 	 * @param context
 	 * @param sourceUrl
 	 */
-	public void removeBlocks(Context context, String sourceUrl) {
+	public synchronized void removeBlocks(Context context, String sourceUrl) {
 		SQLiteDatabase db = openDatabase(context);
 		if (db == null) {
 			return;
@@ -86,11 +87,28 @@ public class DownloadRecorder {
 	}
 
 	/**
+	 * 删除所有Block
+	 * 
+	 * @param context
+	 */
+	public synchronized void removeAllBlocks(Context context) {
+		SQLiteDatabase db = openDatabase(context);
+		if (db == null) {
+			return;
+		}
+		db.delete(TABLE_DownloadBlock._table_name, null, null);
+		if (Constants.DEBUG) {
+			reportSQL("remove all from block table", "removeAllBlocks");
+		}
+		askCloseDatabase(db);
+	}
+
+	/**
 	 * 删除SourceURL对应的所有Block
 	 * 
 	 * @param sourceUrl
 	 */
-	private void checkDeleteExistBlock(SQLiteDatabase db, String sourceUrl) {
+	private synchronized void checkDeleteExistBlock(SQLiteDatabase db, String sourceUrl) {
 		if (db != null && sourceUrl != null) {
 			StringBuilder sb = new StringBuilder();
 			sb.append("delete from ");
@@ -115,7 +133,7 @@ public class DownloadRecorder {
 	 * @param context
 	 * @param blocks
 	 */
-	public void updateBlockProgress(Context context, List<DownloadBlock> blocks) {
+	public synchronized void updateBlockProgress(Context context, List<DownloadBlock> blocks) {
 		if (blocks == null || blocks.isEmpty()) {
 			return;
 		}
@@ -137,7 +155,7 @@ public class DownloadRecorder {
 		askCloseDatabase(db);
 	}
 
-	public void updateBlockProgress(Context context, DownloadBlock block) {
+	public synchronized void updateBlockProgress(Context context, DownloadBlock block) {
 		if (block == null) {
 			return;
 		}
@@ -154,8 +172,7 @@ public class DownloadRecorder {
 		askCloseDatabase(db);
 	}
 
-	public void getBocks(Context context, List<DownloadBlock> out,
-			DownloadFile blockDownloadFile) {
+	public synchronized void getBocks(Context context, List<DownloadBlock> out, DownloadFile blockDownloadFile) {
 		if (out == null || blockDownloadFile == null) {
 			return;
 		}
@@ -182,15 +199,16 @@ public class DownloadRecorder {
 			int index_id = c.getColumnIndex(TABLE_DownloadBlock._ID);
 			int index_start = c.getColumnIndex(TABLE_DownloadBlock.block_start);
 			int index_end = c.getColumnIndex(TABLE_DownloadBlock.block_end);
-			int index_loadSize = c
-					.getColumnIndex(TABLE_DownloadBlock.block_loaded_size);
+			int index_loadSize = c.getColumnIndex(TABLE_DownloadBlock.block_loaded_size);
+			int index_real_url = c.getColumnIndex(TABLE_DownloadBlock.file_real_url);
 			do {
 				DownloadBlock b = new DownloadBlock(//
-						blockDownloadFile,//
-						sourceUrl,//
-						c.getLong(index_start),//
-						c.getLong(index_end),//
-						c.getLong(index_loadSize));
+						blockDownloadFile, //
+						sourceUrl, //
+						c.getString(index_real_url), //
+						c.getInt(index_start), //
+						c.getInt(index_end), //
+						c.getInt(index_loadSize));
 				b.setId(c.getString(index_id));
 				out.add(b);
 			} while (c.moveToNext());
@@ -200,7 +218,7 @@ public class DownloadRecorder {
 	}
 
 	//
-	public void addFile(Context context, DownloadFile file) {
+	public synchronized void addFile(Context context, DownloadFile file) {
 		if (file == null) {
 			return;
 		}
@@ -218,7 +236,7 @@ public class DownloadRecorder {
 		askCloseDatabase(db);
 	}
 
-	public void removeFile(Context context, String sourceUrl) {
+	public synchronized void removeFile(Context context, String sourceUrl) {
 		if (sourceUrl == null) {
 			return;
 		}
@@ -227,13 +245,21 @@ public class DownloadRecorder {
 		askCloseDatabase(db);
 	}
 
-	private void checkDeleteFile(SQLiteDatabase db, String sourceUrl) {
-		String whereClause = TABLE_DownloadFile.file_source_url + "='"
-				+ sourceUrl + "'";
+	public synchronized void removeAllFile(Context context) {
+		SQLiteDatabase db = openDatabase(context);
+		db.delete(TABLE_DownloadFile._table_name, null, null);
+		if (Constants.DEBUG) {
+			reportSQL("remove all from file table", "removeAllFile");
+		}
+		askCloseDatabase(db);
+	}
+
+	private synchronized void checkDeleteFile(SQLiteDatabase db, String sourceUrl) {
+		String whereClause = TABLE_DownloadFile.file_source_url + "='" + sourceUrl + "'";
 		db.delete(TABLE_DownloadFile._table_name, whereClause, null);
 	}
 
-	public void updateFile(Context context, DownloadFile file) {
+	public synchronized void updateFile(Context context, DownloadFile file) {
 		if (file == null) {
 			return;
 		}
@@ -242,15 +268,14 @@ public class DownloadRecorder {
 			return;
 		}
 		//
-		String whereClause = TABLE_DownloadFile.file_source_url + "='"
-				+ file.getSourceUrl() + "'";
+		String whereClause = TABLE_DownloadFile.file_source_url + "='" + file.getSourceUrl() + "'";
 		ContentValues cv = new ContentValues();
 		copy(cv, file);
 		db.update(TABLE_DownloadFile._table_name, cv, whereClause, null);
 		askCloseDatabase(db);
 	}
 
-	public DownloadFile getFile(Context context, String sourceUrl) {
+	public synchronized DownloadFile getFile(Context context, String sourceUrl) {
 		if (sourceUrl == null || TextUtils.isEmpty(sourceUrl)) {
 			return null;
 		}
@@ -284,17 +309,33 @@ public class DownloadRecorder {
 			file.setFileName(c.getString(index));
 			//
 			index = c.getColumnIndex(TABLE_DownloadFile.file_size);
-			file.setFileSize(c.getLong(index));
+			file.setFileSize(c.getInt(index));
 			//
 			index = c.getColumnIndex(TABLE_DownloadFile.loaded_size);
-			file.setLoadedSize(c.getLong(index));
+			file.setLoadedSize(c.getInt(index));
 			//
 			index = c.getColumnIndex(TABLE_DownloadFile.status);
 			file.setStatus(c.getInt(index));
+			// -----------------------------------------------------
+			index = c.getColumnIndex(TABLE_DownloadFile.thumb_uri);
+			file.setThumbUri(c.getString(index));
+			//
+			index = c.getColumnIndex(TABLE_DownloadFile.file_real_url);
+			file.setRealUrl(c.getString(index));
+			//
+			index = c.getColumnIndex(TABLE_DownloadFile.title);
+			file.setTitle(c.getString(index));
+			//
+			index = c.getColumnIndex(TABLE_DownloadFile.createtime);
+			file.setCreatetime(c.getLong(index));
 		}
 		safeClose(c);
 		askCloseDatabase(db);
 		return file;
+	}
+
+	public synchronized void getAllFiles(Context context, List<DownloadFile> out) {
+		getFilesByStatus(context, out, true, null);
 	}
 
 	/**
@@ -302,30 +343,36 @@ public class DownloadRecorder {
 	 * 
 	 * @param context
 	 * @param out
-	 * @param fileStatusFilter
-	 *            只匹配指定status
+	 * @param statusMatchOrNot
+	 *            true 表示包含statusFilter的数据，false表示不包含的数据
+	 * @param statusFilter
+	 *            null表示获取所有File
 	 */
-	public void getFiles(Context context, List<DownloadFile> out,
-			int... fileStatusFilter) {
+	public synchronized void getFilesByStatus(Context context, List<DownloadFile> out, boolean statusMatchOrNot,
+			int... statusFilter) {
 		if (out == null) {
 			return;
 		}
 		StringBuilder sb = new StringBuilder();
 		sb.append("select * from ");
 		sb.append(TABLE_DownloadFile._table_name);
-		if (fileStatusFilter != null && fileStatusFilter.length > 0) {
+		if (statusFilter != null && statusFilter.length > 0) {
 			sb.append(" where ");
-			int len = fileStatusFilter.length;
+			int len = statusFilter.length;
 			int lastOne = len - 1;
+			final String includeOrNoteStatus = statusMatchOrNot ? "=" : "!=";
 			for (int i = 0; i < len; i++) {
 				sb.append(TABLE_DownloadFile.status);
-				sb.append("=");
-				sb.append(fileStatusFilter[i]);
+				sb.append(includeOrNoteStatus);
+				sb.append(statusFilter[i]);
 				if (i != lastOne) {
 					sb.append(" or ");
 				}
 			}
 		}
+		sb.append(" order by ");
+		sb.append(TABLE_DownloadFile.createtime);
+		sb.append(" DESC");
 		String sql = sb.toString();
 		if (Constants.DEBUG) {
 			reportSQL(sql, "getFile");
@@ -339,19 +386,28 @@ public class DownloadRecorder {
 		//
 		if (c.moveToFirst()) {
 			//
-			int indexSourceUrl = c
-					.getColumnIndex(TABLE_DownloadFile.file_source_url);
+			int indexSourceUrl = c.getColumnIndex(TABLE_DownloadFile.file_source_url);
 			int iFileName = c.getColumnIndex(TABLE_DownloadFile.file_name);
 			int iFileSize = c.getColumnIndex(TABLE_DownloadFile.file_size);
 			int iLoadedSize = c.getColumnIndex(TABLE_DownloadFile.loaded_size);
 			int iStatus = c.getColumnIndex(TABLE_DownloadFile.status);
+			// ------------------------------------------------------------
+			int indexRealUrl = c.getColumnIndex(TABLE_DownloadFile.file_real_url);
+			int iThumbUri = c.getColumnIndex(TABLE_DownloadFile.thumb_uri);
+			int iTitle = c.getColumnIndex(TABLE_DownloadFile.title);
+			int iCreaetTime = c.getColumnIndex(TABLE_DownloadFile.createtime);
 			do {
 				DownloadFile f = new DownloadFile();
 				f.setSourceUrl(c.getString(indexSourceUrl));
 				f.setFileName(c.getString(iFileName));
-				f.setFileSize(c.getLong(iFileSize));
-				f.setLoadedSize(c.getLong(iLoadedSize));
+				f.setFileSize(c.getInt(iFileSize));
+				f.setLoadedSize(c.getInt(iLoadedSize));
 				f.setStatus(c.getInt(iStatus));
+				// --------------------------------------
+				f.setThumbUri(c.getString(iThumbUri));
+				f.setRealUrl(c.getString(indexRealUrl));
+				f.setTitle(c.getString(iTitle));
+				f.setCreatetime(c.getLong(iCreaetTime));
 				out.add(f);
 			} while (c.moveToNext());
 		}
@@ -363,6 +419,7 @@ public class DownloadRecorder {
 	private void copy(ContentValues cv, DownloadBlock b) {
 		cv.put(TABLE_DownloadBlock._ID, b.getId());
 		cv.put(TABLE_DownloadBlock.file_source_url, b.getSourceUrl());
+		cv.put(TABLE_DownloadBlock.file_real_url, b.getRealUrl());
 		cv.put(TABLE_DownloadBlock.block_start, b.getStart());
 		cv.put(TABLE_DownloadBlock.block_end, b.getEnd());
 		cv.put(TABLE_DownloadBlock.block_loaded_size, b.getLoadedSize());
@@ -374,11 +431,16 @@ public class DownloadRecorder {
 		cv.put(TABLE_DownloadFile.file_size, file.getFileSize());
 		cv.put(TABLE_DownloadFile.loaded_size, file.getLoadedSize());
 		cv.put(TABLE_DownloadFile.status, file.getStatus());
+		// ----------------------------------------------------
+		cv.put(TABLE_DownloadFile.file_real_url, file.getRealUrl());
+		cv.put(TABLE_DownloadFile.thumb_uri, file.getThumbUri());
+		cv.put(TABLE_DownloadFile.title, file.getTitle());
+		cv.put(TABLE_DownloadFile.createtime, file.getCreatetime());
 	}
 
 	private SQLiteDatabase mSQLiteDatabase;
 
-	private SQLiteDatabase openDatabase(Context context) {
+	private synchronized SQLiteDatabase openDatabase(Context context) {
 		if (mSQLiteDatabase == null || !mSQLiteDatabase.isOpen()) {
 			mSQLiteDatabase = null;
 			if (context != null) {
@@ -399,7 +461,7 @@ public class DownloadRecorder {
 		}
 	}
 
-	protected void askCloseDatabase(SQLiteDatabase db) {
+	protected synchronized void askCloseDatabase(SQLiteDatabase db) {
 		// if (db != null && db.isOpen()) {
 		// db.close();
 		// }

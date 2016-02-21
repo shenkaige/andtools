@@ -24,37 +24,45 @@ public class DownloadDatabase extends SQLiteOpenHelper {
 	public static final class TABLE_DownloadFile implements BaseColumns {
 		public static final String _table_name = "download_file";
 		public static final String file_source_url = "file_source_url";
+		public static final String file_real_url = "file_real_url";
 		public static final String file_name = "file_name";
 		public static final String file_size = "file_size";
+		public static final String title = "title";
 		public static final String loaded_size = "loaded_size";
 		public static final String status = "status";
+		public static final String thumb_uri = "thumb_uri";
+		public static final String createtime = "createtime";
 
-		public static final String _table_create_sql = "CREATE TABLE "
-				+ _table_name + //
+		public static final String _table_create_sql = "CREATE TABLE " + _table_name + //
 				" ("//
-				+ _ID + " INTEGER PRIMARY KEY,"//
-				+ file_source_url + " TEXT,"//
+		// + _ID + " INTEGER PRIMARY KEY,"//
+				+ file_source_url + " TEXT INTEGER PRIMARY KEY,"//
+				+ file_real_url + " TEXT,"//
 				+ file_name + " TEXT,"//
-				+ file_size + " LONG,"//
-				+ loaded_size + " LONG,"//
-				+ status + " INTEGER"//
+				+ file_size + " INTEGER,"//
+				+ title + " TEXT,"//
+				+ loaded_size + " INTEGER,"//
+				+ status + " INTEGER,"//
+				+ thumb_uri + " TEXT,"//
+				+ createtime + " LONG"//
 				+ ");";
 	}
 
 	public static final class TABLE_DownloadBlock implements BaseColumns {
 		public static final String _table_name = "download_block";
 		public static final String file_source_url = "file_source_url";
+		public static final String file_real_url = "file_real_url";
 		public static final String block_start = "block_start";
 		public static final String block_end = "block_end";
 		public static final String block_loaded_size = "block_loaded_size";
 
-		public static final String _table_create_sql = "CREATE TABLE "
-				+ _table_name + //
+		public static final String _table_create_sql = "CREATE TABLE " + _table_name + //
 				" ("//
 				+ _ID + " TEXT PRIMARY KEY,"//
 				+ file_source_url + " TEXT,"//
-				+ block_start + " LONG,"//
-				+ block_end + " LONG,"//
+				+ file_real_url + " TEXT,"//
+				+ block_start + " INTEGER,"//
+				+ block_end + " INTEGER,"//
 				+ block_loaded_size + " INTEGER"//
 				+ ");";
 	}

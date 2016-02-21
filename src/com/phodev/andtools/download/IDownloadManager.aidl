@@ -1,8 +1,25 @@
 package com.phodev.andtools.download;
 import com.phodev.andtools.download.ICallback;
+import com.phodev.andtools.download.IDeleteResult;
 import com.phodev.andtools.download.DownloadFile;
 
 	interface IDownloadManager{
+	
+		/**
+		 * 添加下载任务
+		 * 
+		 * @param url
+		 * @return
+		 */
+	    boolean createTask(String url, String thumbUri, String title, boolean startAfterCreate);
+		/**
+		 * 查询下载任务
+		 * 
+		 * @param url
+		 * @return
+		 */
+		DownloadFile queryTask(String url);
+		
 		/**
 		 * 启动下载
 		 * 
@@ -38,31 +55,33 @@ import com.phodev.andtools.download.DownloadFile;
 		 * @param url
 		 * @param removeLoadedFile
 		 *            是否要删除下载好的文件
-		 * @return
 		 */
-		boolean remove(String url, boolean removeLoadedFile);
+		void remove(String url, boolean removeLoadedFile,in IDeleteResult dr);
 	
 		/**
 		 * 移除所有下载任务
 		 * 
 		 * @param removeLoadedFile
+		 */
+		void removeAll(boolean removeLoadedFile,in IDeleteResult dr);
+
+	   /**
+		 * 根据状态获取文件
+		 * 
+		 * @param statusMatchOrNote
+		 *            true 表示包含statusFilter的数据，false表示不包含的数据
+		 * @param statusFilter
+		 *            null表示获取所有File
 		 * @return
 		 */
-		boolean removeAll(boolean removeLoadedFile);
-	
+		List<DownloadFile> getFilesByStatus(boolean statusMatchOrNot, in int[] statusFilter);		
+		
 		/**
-		 * 获取正在下载中的文件
+		 * 获取所有的下载任务
 		 * 
 		 * @return
 		 */
-		List<DownloadFile> getLoadingFiles();
-	
-		/**
-		 * 获取已经加载好的文件
-		 * 
-		 * @return
-		 */
-		List<DownloadFile> getLoadedFiles();
+		List<DownloadFile> getAllFiles();		
 	
 		/**
 		 * 注册监听器

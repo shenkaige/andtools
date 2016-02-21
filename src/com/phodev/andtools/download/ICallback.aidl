@@ -20,7 +20,7 @@ import com.phodev.andtools.download.DownloadFile;
 		 * 
 		 * @param file
 		 */
-		 void onDownloadFileRemove(in DownloadFile file);
+		 void onDownloadFileRemove(in DownloadFile file,boolean removedFromDisk);
 	
 		/**
 		 * 下载任务进度的变化(单位都是byte)
@@ -33,7 +33,7 @@ import com.phodev.andtools.download.DownloadFile;
 		 * @param speed
 		 *            当前的速度
 		 */
-		 void onProgress(String url, long total, long loaded, int speed);
+		 void onProgress(String url, int total, int loaded, int speed);
 	
 		/**
 		 * 下载成功
