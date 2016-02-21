@@ -117,10 +117,9 @@ public class DonwloadFragment extends InnerFragment implements OnClickListener {
 
 	private ICallback iCallback = new ICallback.Stub() {
 		@Override
-		public void onProgress(String url, long total, long loaded, int speed)
-				throws RemoteException {
-			sendState("------Loaded : " + (loaded / 1024) + "/" + (total / 1024)
-					+ "kb" + "\n        Speed : " + speed / 1024 + "kb/s");
+		public void onProgress(String url, int total, int loaded, int speed) throws RemoteException {
+			sendState("------Loaded : " + (loaded / 1024) + "/" + (total / 1024) + "kb" + "\n        Speed : "
+					+ speed / 1024 + "kb/s");
 		}
 
 		@Override
@@ -129,15 +128,8 @@ public class DonwloadFragment extends InnerFragment implements OnClickListener {
 		}
 
 		@Override
-		public void onDownloadFileStatusChanged(DownloadFile file)
-				throws RemoteException {
+		public void onDownloadFileStatusChanged(DownloadFile file) throws RemoteException {
 			sendState("onDownloadFileStatusChanged,status:" + file.getStatus());
-		}
-
-		@Override
-		public void onDownloadFileRemove(DownloadFile file)
-				throws RemoteException {
-			sendState("onDownloadFileRemove");
 		}
 
 		@Override
@@ -146,11 +138,16 @@ public class DonwloadFragment extends InnerFragment implements OnClickListener {
 		}
 
 		@Override
-		public void onDownloadFailed(String url, int curStatus, int errorCode)
-				throws RemoteException {
-			sendState("DownloadFailed,Status:" + curStatus + ",ErrorCode:"
-					+ errorCode);
+		public void onDownloadFailed(String url, int curStatus, int errorCode) throws RemoteException {
+			sendState("DownloadFailed,Status:" + curStatus + ",ErrorCode:" + errorCode);
 		}
+
+		@Override
+		public void onDownloadFileRemove(DownloadFile file, boolean removedFromDisk) throws RemoteException {
+			// TODO Auto-generated method stub
+
+		}
+
 	};
 
 	private void sendState(String msgStr) {
