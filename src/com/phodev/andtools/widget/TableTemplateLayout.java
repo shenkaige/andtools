@@ -22,6 +22,18 @@ import android.widget.GridLayout;
  * 
  * <pre>
  * <b>注意：</b>目前只支持绝对值的转换
+ * 目前支持的属性：
+ *  <ol>
+ *   	<li>table</li>
+ *  	<li>tr</li>
+ *  	<li>td</li>
+ *  	<li>width</li>
+ *  	<li>height</li>
+ *  	<li>rowspan</li>
+ *  	<li>colspan</li>
+ *  	<li>cellspacing</li>
+ *  	<li>cid(Component Id)</li>
+ *  </ol>
  * </pre>
  * 
  * @author skg
