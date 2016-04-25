@@ -203,7 +203,7 @@ public class TableTemplateLayout extends GridLayout {
 	private static final String XML_COLUMN_SPAN = "colspan";
 	private static final String XML_CELLSPACING = "cellspacing";
 	//
-	private static final String XML_COMPONENT_ID = "class";// CSS class id
+	private static final String XML_COMPONENT_ID = "cid";
 	//
 	// public static final int TEMPLATE_MATCH_PARENT = -1;
 	// public static final int TEMPLATE_WRAP_CONTENT = -2;
