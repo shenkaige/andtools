@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<table
+    height="768px"
+    width="1024px" >
+
+    <tr>
+        <td
+            height="450px"
+            rowspan="2"
+            width="180px" />
+
+        <td
+            height="450px"
+            rowspan="2"
+            width="180px" />
+
+        <td
+            height="928px"
+            rowspan="4"
+            width="300px" />
+
+        <td
+            height="700px"
+            rowspan="3"
+            width="300px" />
+    </tr>
+
+    <tr />
+
+    <tr>
+
+        <td
+            height="450px"
+            rowspan="2"
+            width="180px" />
+
+        <td
+            height="450px"
+            rowspan="2"
+            width="180px" />
+    </tr>
+
+    <tr>
+
+        <td
+            height="700px"
+            rowspan="3"
+            width="300px" />
+    </tr>
+
+    <tr>
+
+        <td
+            height="450px"
+            rowspan="2"
+            width="180px" />
+
+        <td
+            height="450px"
+            rowspan="2"
+            width="180px" />
+
+        <td
+            height="450px"
+            rowspan="2"
+            width="300px" />
+    </tr>
+
+    <tr />
+
+</table>
