@@ -11,7 +11,6 @@ import org.xmlpull.v1.XmlPullParserException;
 import android.content.Context;
 import android.content.res.XmlResourceParser;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.Xml;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,7 +31,8 @@ import android.widget.GridLayout;
  *  	<li>rowspan</li>
  *  	<li>colspan</li>
  *  	<li>cellspacing</li>
- *  	<li>cid(Component Id)</li>
+ *  	<li>ctype(Component Type)</li>
+ *  	<li>dindex</li>
  *  </ol>
  * </pre>
  * 
@@ -44,10 +44,12 @@ public class TableTemplateLayout extends GridLayout {
 
 	public TableTemplateLayout(Context context) {
 		super(context);
+		setAlignmentMode(ALIGN_BOUNDS);
 	}
 
 	public TableTemplateLayout(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		setAlignmentMode(ALIGN_BOUNDS);
 	}
 
 	public interface TableCellFactory {
@@ -56,8 +58,17 @@ public class TableTemplateLayout extends GridLayout {
 
 	private TableTemplate mTableTemplate;
 
+	private Float mDimensScale;
+	private boolean mAutoScale;
+
 	public void setTableData(TableTemplate template, TableCellFactory factory) {
+		setTableData(template, factory, null);
+	}
+
+	public void setTableData(TableTemplate template, TableCellFactory factory, Float dimensScale) {
 		mTableTemplate = template;
+		mDimensScale = dimensScale;
+		mAutoScale = dimensScale == null;
 		//
 		setRowCount(template.getRowCount());
 		setColumnCount(template.getColumnCount());
@@ -81,10 +92,9 @@ public class TableTemplateLayout extends GridLayout {
 				// glp = new GridLayout.LayoutParams(lp);
 				glp = new GridLayout.LayoutParams();
 			}
-			glp.rowSpec = spec(UNDEFINED, Math.max(1, cell.rowSpan), 1);
-			glp.columnSpec = spec(UNDEFINED, Math.max(1, cell.columnSpan), 1);
+			glp.rowSpec = spec(UNDEFINED, Math.max(1, cell.rowSpan)/* , 1 */);
+			glp.columnSpec = spec(UNDEFINED, Math.max(1, cell.columnSpan)/* , 1 */);
 			addViewInLayout(child, -1, glp, true);
-			Log.e("ttt", "add table cell:" + cell);
 		}
 		// 3.invalidate
 		forceLayout();
@@ -95,16 +105,22 @@ public class TableTemplateLayout extends GridLayout {
 	@Override
 	protected void onMeasure(int widthSpec, int heightSpec) {
 		// 1.get max size
-		if (MeasureSpec.getMode(widthSpec) != MeasureSpec.EXACTLY
-				|| MeasureSpec.getMode(heightSpec) != MeasureSpec.EXACTLY) {
-			throw new IllegalArgumentException(getClass().getCanonicalName()
-					+ " just suport exactly size description,for example MATCH_PARENT or 100dp");
+		float scale;
+		if (mAutoScale) {
+			if (MeasureSpec.getMode(widthSpec) != MeasureSpec.EXACTLY
+					|| MeasureSpec.getMode(heightSpec) != MeasureSpec.EXACTLY) {
+				throw new IllegalArgumentException(
+						"if you not setup DimensScale,you must use exactly size description for"
+								+ getClass().getCanonicalName() + ",for example MATCH_PARENT or 100dp");
+			}
+			final int maxWidth = MeasureSpec.getSize(widthSpec);
+			final int maxHeight = MeasureSpec.getSize(heightSpec);
+			final int designWidth = mTableTemplate.designWidth;
+			final int designHeight = mTableTemplate.designHeight;
+			scale = Math.min((float) maxWidth / designWidth, (float) maxHeight / designHeight);
+		} else {
+			scale = mDimensScale;
 		}
-		final int maxWidth = MeasureSpec.getSize(widthSpec);
-		final int maxHeight = MeasureSpec.getSize(heightSpec);
-		final int designWidth = mTableTemplate.designWidth;
-		final int designHeight = mTableTemplate.designHeight;
-		final float scale = Math.min((float) maxWidth / designWidth, (float) maxHeight / designHeight);
 		//
 		int childCount = getChildCount();
 		for (int i = 0; i < childCount; i++) {
@@ -133,7 +149,10 @@ public class TableTemplateLayout extends GridLayout {
 		private int designHeight;
 		private String componentId;
 		private int flowIndex;
+		private int dataIndex;
+		@Deprecated
 		int rowIndex;
+		@Deprecated
 		int columnIndex;
 
 		public int getDesignWidth() {
@@ -152,11 +171,15 @@ public class TableTemplateLayout extends GridLayout {
 			return flowIndex;
 		}
 
+		public int getDataIndex() {
+			return dataIndex;
+		}
+
 		@Override
 		public String toString() {
 			return "TableCell [rowSpan=" + rowSpan + ", columnSpan=" + columnSpan + ", designWidth=" + designWidth
 					+ ", designHeight=" + designHeight + ", componentId=" + componentId + ", flowIndex=" + flowIndex
-					+ "]";
+					+ ", dataIndex=" + dataIndex + ", rowIndex=" + rowIndex + ", columnIndex=" + columnIndex + "]";
 		}
 
 	}
@@ -203,7 +226,9 @@ public class TableTemplateLayout extends GridLayout {
 	private static final String XML_COLUMN_SPAN = "colspan";
 	private static final String XML_CELLSPACING = "cellspacing";
 	//
-	private static final String XML_COMPONENT_ID = "cid";
+	private static final String XML_COMPONENT_TYPE = "ctype";
+	/** Data Index */
+	private static final String XML_DATA_INDEX = "dindex";
 	//
 	// public static final int TEMPLATE_MATCH_PARENT = -1;
 	// public static final int TEMPLATE_WRAP_CONTENT = -2;
@@ -241,10 +266,11 @@ public class TableTemplateLayout extends GridLayout {
 						//
 						cell.designWidth = parseSize(parser, XML_WIDTH, 0);
 						cell.designHeight = parseSize(parser, XML_HEIGHT, 0);
-						cell.componentId = parser.getAttributeValue(null, XML_COMPONENT_ID);
+						cell.componentId = parser.getAttributeValue(null, XML_COMPONENT_TYPE);
 						cell.flowIndex = cellFlowIndex;
 						cell.rowIndex = curRowIndex;
-						cell.columnIndex = curColumnIndex;
+						cell.columnIndex = curColumnIndex;// FIXME 当有合并行的时候，计算有误
+						cell.dataIndex = parseInt(parser, XML_DATA_INDEX, -1);
 						cellFlowIndex++;
 						result.cells.add(cell);
 					}
