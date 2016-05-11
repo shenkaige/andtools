@@ -26,23 +26,19 @@ public class FixFocusOrderGridLayout extends GridLayout {
 
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
-		if (nextFocusView == null) {
+		if (nextFocusView == null && event.getAction() == KeyEvent.ACTION_DOWN) {
 			switch (event.getKeyCode()) {
 			case KeyEvent.KEYCODE_DPAD_LEFT:
-				if (event.getAction() == KeyEvent.ACTION_DOWN)
-					nextFocusView = searchNearestChild(getFocusedChild(), View.FOCUS_LEFT);
+				nextFocusView = searchNearestChild(getFocusedChild(), View.FOCUS_LEFT);
 				break;
 			case KeyEvent.KEYCODE_DPAD_UP:
-				if (event.getAction() == KeyEvent.ACTION_DOWN)
-					nextFocusView = searchNearestChild(getFocusedChild(), View.FOCUS_UP);
+				nextFocusView = searchNearestChild(getFocusedChild(), View.FOCUS_UP);
 				break;
 			case KeyEvent.KEYCODE_DPAD_RIGHT:
-				if (event.getAction() == KeyEvent.ACTION_DOWN)
-					nextFocusView = searchNearestChild(getFocusedChild(), View.FOCUS_RIGHT);
+				nextFocusView = searchNearestChild(getFocusedChild(), View.FOCUS_RIGHT);
 				break;
 			case KeyEvent.KEYCODE_DPAD_DOWN:
-				if (event.getAction() == KeyEvent.ACTION_DOWN)
-					nextFocusView = searchNearestChild(getFocusedChild(), View.FOCUS_DOWN);
+				nextFocusView = searchNearestChild(getFocusedChild(), View.FOCUS_DOWN);
 				break;
 			}
 		}
