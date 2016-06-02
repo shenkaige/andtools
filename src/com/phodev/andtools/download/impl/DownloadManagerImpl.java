@@ -215,14 +215,16 @@ public class DownloadManagerImpl extends IDownloadManager.Stub {
 			final int listSize = mDownloadList.size();
 			for (int i = 0; i < listSize; i++) {
 				DownloadFile df = mDownloadList.get(i);
-				if (mRemoveFile || df.getStatus() != DownloadFile.STATUS_DOWNLOAD_COMPLETE) {
-					// 1,删除下载文件
-					// 2,删除临时文件
-					String filePath = df.getFilePath();
-					if (filePath != null && filePath.length() > 0) {
-						File file = new File(filePath);
-						if (file.exists()) {
-							file.delete();
+				if (mRemoveFile) {
+					if (df != null && df.getStatus() != DownloadFile.STATUS_DOWNLOAD_COMPLETE) {
+						// 1,删除下载文件
+						// 2,删除临时文件
+						String filePath = df.getFilePath();
+						if (filePath != null && filePath.length() > 0) {
+							File file = new File(filePath);
+							if (file.exists()) {
+								file.delete();
+							}
 						}
 					}
 				}
