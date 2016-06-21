@@ -244,7 +244,7 @@ public class DownloadManagerImpl extends IDownloadManager.Stub {
 	private final int max_task_runing_count = Constants.max_loading_task_count;
 	private int runingTaskCount;
 
-	private void scheduleStart(DownloadTask task) {
+	private synchronized void scheduleStart(DownloadTask task) {
 		if (task.isRunning()) {
 			return;
 		}
@@ -265,7 +265,7 @@ public class DownloadManagerImpl extends IDownloadManager.Stub {
 		}
 	}
 
-	private void tryPopTask(int findedTaskCount) {
+	private synchronized void tryPopTask(int findedTaskCount) {
 		synchronized (mTasksMap) {
 			runingTaskCount -= findedTaskCount;
 			if (runingTaskCount >= max_task_runing_count) {
