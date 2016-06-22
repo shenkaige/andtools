@@ -36,6 +36,6 @@ public class Constants {
 	public static final String download_file_mode = "rwd";
 	//
 	public static final int THREAD_POOL_CORE_SIZE = thread_count + 1;// 一直保留的线程数
-	public static final int THREAD_POOL_MAX_SIZE = 50;
-	public static final int THREAD_POOL_CHILD_KEEP_ALIVE_TIME = 1000 * 60;// ms//允许空闲线程时间
+	public static final int THREAD_POOL_MAX_SIZE = Integer.MAX_VALUE;
+	public static final int THREAD_POOL_CHILD_KEEP_ALIVE_TIME = 1000;// ms//允许空闲线程时间
 }
