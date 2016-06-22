@@ -49,8 +49,7 @@ public class DownloadManagerImpl extends IDownloadManager.Stub {
 		recorder = DownloadRecorder.getInstance();
 		// load running task
 		List<DownloadFile> uncompleteFile = new ArrayList<DownloadFile>();
-		recorder.getFilesByStatus(mContext, uncompleteFile, true, DownloadFile.STATUS_DOWNLOAD_LOADING,
-				DownloadFile.STATUS_DOWNLOAD_PAUSED, DownloadFile.STATUS_DOWNLOAD_WAIT);
+		recorder.getFilesByStatus(mContext, uncompleteFile, false, DownloadFile.STATUS_DOWNLOAD_COMPLETE);
 		//
 		createTask(uncompleteFile, mTasksMap);
 		// check restore all task
@@ -362,19 +361,31 @@ public class DownloadManagerImpl extends IDownloadManager.Stub {
 
 		@Override
 		public void onDownloadFileStatusChanged(DownloadFile file) {
-			notifyDownloadStateChanged(file);
 			if (file != null) {
 				switch (file.getStatus()) {
 				case DownloadFile.STATUS_DOWNLOAD_COMPLETE:
+					// remove task from TaskMap
+					onTaskComplated(file);
 				case DownloadFile.STATUS_DOWNLOAD_ERROR:
 				case DownloadFile.STATUS_DOWNLOAD_PAUSED:
 					tryPopTask(1);
 					break;
 				}
+				notifyDownloadStateChanged(file);
 			}
 		}
 
 	};
+	
+	private void onTaskComplated(DownloadFile df){
+		if(df==null){
+			return;
+		}
+		if(df.getStatus() == DownloadFile.STATUS_DOWNLOAD_COMPLETE){
+			mTasksMap.remove(df.getSourceUrl());
+		}
+	}
+	
 	private static final int MSG_ACTION_PROGREES = 1;
 	private static final int MSG_ACTION_DOWNLOAD_DONE = 2;
 	private static final int MSG_ACTION_DOWNLOAD_FAILED = 3;
