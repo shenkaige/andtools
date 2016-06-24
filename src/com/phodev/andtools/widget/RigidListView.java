@@ -33,13 +33,11 @@ public class RigidListView extends LinearLayout implements OnClickListener {
 		removeAllChild();
 		int count = mAdapter.getCount();
 		for (int i = 0; i < count; i++) {
-			View v = mAdapter.getView(i, null, null);
-			v.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT,
-					LayoutParams.FILL_PARENT));
+			View v = mAdapter.getView(i, null, this);
+			v.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
 			//
 			LinearLayout itemContainer = new LinearLayout(getContext());
-			itemContainer.setLayoutParams(new LayoutParams(
-					LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
+			itemContainer.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
 			// 添加Item的View
 			itemContainer.addView(v);
 			// 设置Divider
@@ -96,8 +94,7 @@ public class RigidListView extends LinearLayout implements OnClickListener {
 	private Drawable getDivider() {
 		if (dividerDrawable == null && dividerResId != 0) {
 			try {
-				dividerDrawable = getContext().getResources().getDrawable(
-						dividerResId);
+				dividerDrawable = getContext().getResources().getDrawable(dividerResId);
 			} catch (NotFoundException e) {
 				e.printStackTrace();
 			}
@@ -158,7 +155,6 @@ public class RigidListView extends LinearLayout implements OnClickListener {
 		public void onInvalidated() {
 			refreshUI();
 		}
-
 	}
 
 	/**
@@ -166,13 +162,11 @@ public class RigidListView extends LinearLayout implements OnClickListener {
 	 */
 	private void refreshUI() {
 		bindLinearLayout();
-
 	}
 
 	private void removeAllChild() {
 		if (this.getChildCount() > 0) {
 			removeAllViews();
-
 		}
 	}
 }
